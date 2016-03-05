@@ -31,31 +31,26 @@ FILE *fp = NULL;
 
 char cBuf [LARGE_BUF_SZ];
 
-char cBf0 [SMALL_BUF_SZ], cBf1 [SMALL_BUF_SZ], cBf2 [SMALL_BUF_SZ];
-
 #if !defined(ANTIFLOAT) 
 	float fltTM, fltDIn, fltDOut;
 #else
 	QuasiFloatType qfltTM, qfltDIn, qfltDOut;
-
-/*	int fltTM_i,fltTM_f,    fltDIn_i,fltDIn_f ,  fltDOut_i,fltDOut_f;
-	int fltTM_power,    fltDIn_power,  fltDOut_power;
-	char fltTM_sgn,    fltDIn_sgn,  fltDOut_sgn;
-*/
 #endif /* !defined(ANTIFLOAT) */
 
 pTimepointType pTimeChain;
 
+int iOldSec;
 
 int main ()
 {
-
 	if ( NULL == (fp = fopen (FILE_NAME, "r") ) )
 	{
 		printf("can't open \n");
 
 		return P_ERROR;
 	}
+
+	printf("Loading USB-curve-data via NFS from file <%s>\n", FILE_NAME);
 
 	while ( ! (feof (fp) ) ) 
 	{
@@ -67,24 +62,19 @@ int main ()
 		{
 		char * cpTmp = cBuf;
 
+#if DEBUG_DATA
 			printf("scanned: >> %s\n", cBuf);
+#endif /* (DEBUG_DATA) */
 
 #if !defined(ANTIFLOAT) 
 			fltTM = fltDIn = fltDOut = 0.0f;
 #else
+
 			memset (&qfltTM, 0, sizeof (QuasiFloatType) ) ;
 			memset (&qfltDIn, 0, sizeof (QuasiFloatType) ) ;
 			memset (&qfltDOut, 0, sizeof (QuasiFloatType) ) ;
-/*
-			fltTM_i=fltTM_f=     fltDIn_i=fltDIn_f=   fltDOut_i=fltDOut_f = 0;
-			fltTM_power=fltDIn_power=fltDOut_power=0;
-			fltTM_sgn=fltDIn_sgn=fltDOut_sgn='?';
-*/
-#endif /* !defined(ANTIFLOAT) */
 
-			/* memset (cBf0, 0, SMALL_BUF_SZ);
-			memset (cBf1, 0, SMALL_BUF_SZ);
-			memset (cBf2, 0, SMALL_BUF_SZ); */
+#endif /* !defined(ANTIFLOAT) */
 
 			while (*cpTmp) {  if (',' == *cpTmp) *cpTmp = ' '; cpTmp++; }
 			//printf("changed: >> %s\n", cBuf);
@@ -97,8 +87,11 @@ int main ()
 					&(qfltDIn.integer),&(qfltDIn.fraction),&(qfltDIn.sgn),&(qfltDIn.power),
 					&(qfltDOut.integer),&(qfltDOut.fraction),&(qfltDOut.sgn),&(qfltDOut.power)  );
 
+if (0 == qfltTM.power) if (iOldSec!= qfltTM.integer){iOldSec=qfltTM.integer; printf("sec: %d; ", iOldSec); fflush(stdout); }
+
 #endif /* !defined(ANTIFLOAT) */
 
+#if DEBUG_DATA
 #if !defined(ANTIFLOAT) 
 			printf(" parced : >>  <%f> <%f> <%f>\n", fltTM, fltDIn, fltDOut );
 #else
@@ -107,32 +100,28 @@ int main ()
 					qfltDIn.integer,qfltDIn.fraction,qfltDIn.sgn,qfltDIn.power,
 					qfltDOut.integer,qfltDOut.fraction,qfltDOut.sgn,qfltDOut.power  );
 #endif /* !defined(ANTIFLOAT) */
+#endif /* (DEBUG_DATA) */
 
-			//_EnrollPoint("_AppendPoint", &pTimeChain, &fltTM, &fltDIn, &fltDOut, "emty");
 #if !defined(ANTIFLOAT) 
 			EnrollPoint(&pTimeChain, &fltTM, &fltDIn, &fltDOut, "N/A");
 #else
 			EnrollPoint(&pTimeChain, &qfltTM, &qfltDIn, &qfltDOut, "N/A");
 #endif /* !defined(ANTIFLOAT) */
-
-			// usleep(500000);
-
 		}
 	}
 
 	fclose(fp);
 
-	printf("success 0 \n");
+	printf("Issuing USB-curve-data on Pin #0 Port 'D'\n", FILE_NAME);
 
-	//_ProcessPoints("_ProcessPoints", pTimeChain);
-	//ProcessPoints(pTimeChain);
+	PortD_Prepare( );
+	ProcessPoints(pTimeChain);
 
-	printf("success 1 \n");
+	printf("Disposing memory allocations\n");
 
-	//_DeletePoints("_DeletePoints", &pTimeChain);
 	DeletePoints(&pTimeChain);
 
-	printf("success 2 \n");
+	printf("Done (success) \n"); fflush(stdout);
 
 	return P_SUCCESS;
 }

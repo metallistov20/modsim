@@ -57,7 +57,7 @@ int PortD_Probe( )
 
 	while (1)
 	{
-		PortD_Toggle(  PD1 | PD0 );
+		PortD_Toggle(  /*PD1 |*/ PD0 );
 
 		/* Dubious */
 		usleep (10);

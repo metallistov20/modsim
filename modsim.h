@@ -25,7 +25,8 @@
 #define P_ERROR_SCN	(-2)
 
 #define FILE_NAME	"./RawData/12d1:1446/NewFile1.csv"
-#define SMALL_BUF_SZ	32
-#define LARGE_BUF_SZ	(1024*8)
+
+//#define LARGE_BUF_SZ	(1024*8)
+#define LARGE_BUF_SZ	(0x100)
 
 #endif /* _MODSIM_H_ */

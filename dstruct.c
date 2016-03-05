@@ -24,6 +24,8 @@
 #include "dstruct.h"
 #include "dport.h"
 
+//int iOldSec;
+int iOldSecPRC;
 
 int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
 #if !defined(ANTIFLOAT) 
@@ -36,10 +38,6 @@ int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain,
 {
 pTimepointType pChild, pTempPointChain;
 
-#if 0
-	printf(" %s called: <%f> <%f> <%f> <%s> \n", caller, *fltTm, *fltX, *fltY, pcMrq);//printf(" called: <%f> <%f> <%f>  \n",  *fltTm, *fltX, *fltY );
-	return 0;
-#else
 	if (NULL == *ppThisPointChain)
 	{
 		/* only one chain, for beginning */
@@ -157,7 +155,6 @@ pTimepointType pChild, pTempPointChain;
 			pTempPointChain->pcMarquee
 		);
 #endif /* !defined(ANTIFLOAT) */
-
 #endif /* (DEBUG_DATA) */
 
 		/* Skip everything, except last entry */
@@ -174,7 +171,6 @@ pTimepointType pChild, pTempPointChain;
 
 	}
 	return (0);
-#endif /* #if 0, #else */
 }
 
 #define NPROC "not processed"
@@ -188,7 +184,7 @@ pTimepointType pPointChain = pPointChainPar;
 	/* Process each entry of chain */
 	while (NULL != pPointChain)
 	{
-//#if DEBUG_DATA
+#if DEBUG_DATA
 #if !defined(ANTIFLOAT)
 		printf("[%s] %s:%s : <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			pPointChain->fltAbsTime,
@@ -211,7 +207,7 @@ pTimepointType pPointChain = pPointChainPar;
 			pPointChain->pcMarquee
 		);
 #endif /* !defined(ANTIFLOAT) */
-
+#endif /* (DEBUG_DATA) */
 
 /*
 TTL уровни "0" 0,4В и "1" 2,4В
@@ -225,32 +221,40 @@ TTL уровни "0" 0,4В и "1" 2,4В
 USBN9603-28.pdf
 
 */
+if (0 == pPointChain->qfltAbsTime.power)
+if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
+{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
+
+//		PortD_Toggle( PD0 );
+
 #if !defined(ANTIFLOAT)
 		if (pPointChain->fltXval <= MIN_THLD) 
 #else
-		if (0)
+		if ( ('-' == pPointChain->qfltXval.sgn) && (2 == pPointChain->qfltXval.power) 
+		&& (4 == pPointChain->qfltXval.integer || (3 == pPointChain->qfltXval.integer && 0 != pPointChain->qfltXval.fraction) )  )
 #endif /* !defined(ANTIFLOAT) */
 
 			PortD_Down( PD0 );
+
 		else
 #if !defined(ANTIFLOAT)
 			if (pPointChain->fltXval >= MAX_THLD) 
 #else
-			if (0)
+			if ( ('-' == pPointChain->qfltXval.sgn) && (2 < pPointChain->qfltXval.power) )
 #endif /* !defined(ANTIFLOAT) */
 
-				PortD_Down( PD0 );
+				PortD_Up( PD0 );
 			else
 			{
 				pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
 				strcpy( pPointChain->pcMarquee, NPROC);
-
+/*
 				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
-					pPointChain->pcMarquee
-		);
+					pPointChain->pcMarquee	);
+*/
 			}
 
-//#endif /* (DEBUG_DATA) */
+
 
 		/* Go to next record of chain */
 		pPointChain = pPointChain->pNext;
