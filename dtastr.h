@@ -20,6 +20,9 @@
 #ifndef _DTASTR_H_
 #define _DTASTR_H_
 
+/* Old compiler does not operate such ANSI macros as __func__, et al */
+#define __func__ "_func_"
+
 /* List of D+(d.IN) and D-(d.OUT) values with relative time points */
 typedef struct _TimepointType
 {

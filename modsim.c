@@ -25,7 +25,64 @@
 #include "modsim.h"
 #include "dtastr.h"
 
-int main ()
+#include <stdio.h>
+
+#include <errno.h>
+#include <unistd.h>
+#include <sys/types.h> 
+#include <sys/time.h>
+#include<asm/MC68EZ328.h>
+
+#if 1
+
+#define PE0 0x80
+#define PE1 0x40
+
+#define PE0orPE1 (0x80 | 0x40)
+
+void PortE_Prepare()
+{
+	PDSEL = 0xF0;
+
+	PDDIR = 0xF0;
+	printf ("============ ============ \n");
+}
+
+void PortE_Toggle(unsigned char ucBit)
+{
+	PDDATA ^= ucBit;
+}
+
+int main( )
+{
+	PortE_Prepare( );
+
+	PortE_Toggle(  PE0 );
+
+	while (1)
+	{
+		PortE_Toggle(  PE1 | PE0 );
+
+		//PDDATA ^= 0xF0;//mF0
+		//PDDATA ^= 0x80;//m80
+		//PDDATA ^= 0x40;//m40
+		//PDDATA ^= 0x20;//m20
+		//PDDATA ^= 0x10;//m10
+
+		//PDDATA ^= 0x01;//m01
+		//PDDATA ^= 0x02;//m02
+		//PDDATA ^= 0x04;//m04
+		//PDDATA ^= 0x08;//m08
+
+		// PDDATA ^= PE0orPE1;//PE0orPE1
+
+		usleep (10);
+	}
+	return 0;
+}
+#endif
+
+int _main ()
 {
 FILE *fp = NULL;
 
