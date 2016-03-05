@@ -34,8 +34,8 @@ LDFLAGS=
 
 all:	modsim
 
-modsim: modsim.o dtastr.o 
-	$(CC) $(CFLAGS)  -o modsim modsim.o dtastr.o 
+modsim: modsim.o dtastr.o eport.o
+	$(CC) $(CFLAGS)  -o modsim modsim.o dtastr.o   eport.o
 
 clean:
 	rm *.o *~ modsim *.coff
