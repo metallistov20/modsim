@@ -24,7 +24,7 @@ PREFIX=m68k-pic-coff-
 CC=$(PREFIX)gcc
 
 # Headers. Can be omitted as long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
-CFLAGS=-I/opt/uClinux/m68k-pic-coff/include
+CFLAGS=-DANTIFLOAT -DDEBUG_DATA -I/opt/uClinux/m68k-pic-coff/include
 
 # As long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
 LDFLAGS=
@@ -32,11 +32,11 @@ LDFLAGS=
 .o: .c
 	$(CC) $(CFLAGS)  -o $@ -c $< $(CFLAGS) $(LDFLAGS)
 
-all:	modsim
+all:	m
 
-modsim: modsim.o dstruct.o dport.o
-	$(CC) $(CFLAGS)  -o modsim modsim.o dstruct.o dport.o
+m: modsim.o dstruct.o dport.o
+	$(CC) $(CFLAGS)  -o m modsim.o dstruct.o dport.o
 
 clean:
-	rm *.o *~ modsim *.coff
+	rm *.o *~ modsim *.coff m
 	

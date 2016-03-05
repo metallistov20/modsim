@@ -102,7 +102,7 @@ int main ()
 #if !defined(ANTIFLOAT) 
 			printf(" parced : >>  <%f> <%f> <%f>\n", fltTM, fltDIn, fltDOut );
 #else
-			printf(" parced : >>  %d.%de%c0%d %d.%de%c0%d %d.%de%c0%d]n",
+			printf(" parced : >>  %d.%de%c0%d %d.%de%c0%d %d.%de%c0%d]\n",
 					qfltTM.integer,qfltTM.fraction,qfltTM.sgn,qfltTM.power,
 					qfltDIn.integer,qfltDIn.fraction,qfltDIn.sgn,qfltDIn.power,
 					qfltDOut.integer,qfltDOut.fraction,qfltDOut.sgn,qfltDOut.power  );
