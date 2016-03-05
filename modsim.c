@@ -23,29 +23,20 @@
 #include <memory.h>
 
 #include "modsim.h"
-#include "dtastr.h"
-#include "eport.h"
-
-/*#include <stdio.h>
-
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/time.h>
-#include<asm/MC68EZ328.h>
-*/
+#include "dstruct.h"
+#include "dport.h"
 
 int main( )
 {
-	PortE_Prepare( );
+	PortD_Prepare( );
 
-	PortE_Toggle(  PE0 );
+	PortD_Toggle(  PD0 );
 
 	while (1)
 	{
-		PortE_Toggle(  PE1 | PE0 );
+		PortD_Toggle(  PD1 | PD0 );
 
-		usleep (1);
+		usleep (10);
 	}
 	return 0;
 }
