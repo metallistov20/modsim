@@ -20,10 +20,29 @@
 #ifndef _DPORT_H_
 #define _DPORT_H_
 
+/*
+Function	Module Pin
+LD0		30
+LD1		29
+LD2		28
+LD3		27
+*/
 #define PD0 0x80
 #define PD1 0x40
-
+#define PD2 0x20
+#define PD3 0x10
 #define PD0orPD1 (PD0 | PD1)
+
+/*
+LFLM		26
+LLAP		25
+LCLK		24
+LACD		23 
+*/
+#define FLM 0x08
+#define LAP 0x04
+#define LCK 0x02
+#define ACD 0x01
 
 #endif /* _DPORT_H_ */
 

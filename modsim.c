@@ -26,35 +26,29 @@
 #include "dstruct.h"
 #include "dport.h"
 
-int main( )
-{
-	PortD_Prepare( );
 
-	PortD_Toggle(  PD0 );
-
-	while (1)
-	{
-		PortD_Toggle(  PD1 | PD0 );
-
-		usleep (10);
-	}
-	return 0;
-}
-
-
-
-
-int _main ()
-{
 FILE *fp = NULL;
 
 char cBuf [LARGE_BUF_SZ];
 
 char cBf0 [SMALL_BUF_SZ], cBf1 [SMALL_BUF_SZ], cBf2 [SMALL_BUF_SZ];
 
-float fltTM, fltDIn, fltDOut;
+#if !defined(ANTIFLOAT) 
+	float fltTM, fltDIn, fltDOut;
+#else
+	QuasiFloatType qfltTM, qfltDIn, qfltDOut;
+
+/*	int fltTM_i,fltTM_f,    fltDIn_i,fltDIn_f ,  fltDOut_i,fltDOut_f;
+	int fltTM_power,    fltDIn_power,  fltDOut_power;
+	char fltTM_sgn,    fltDIn_sgn,  fltDOut_sgn;
+*/
+#endif /* !defined(ANTIFLOAT) */
 
 pTimepointType pTimeChain;
+
+
+int main ()
+{
 
 	if ( NULL == (fp = fopen (FILE_NAME, "r") ) )
 	{
@@ -63,32 +57,6 @@ pTimepointType pTimeChain;
 		return P_ERROR;
 	}
 
-/*
-
-Function	Module Pin
-LD0	30
-LD1	29
-LD2	28
-LD3	27
-LFLM	26
-LLAP	25
-LCLK	24
-LACD	23 
-*/
-
-/*
-TTL уровни "0" 0,4В и "1" 2,4В
-Точнее - <0.4 и >2.4 сответственно
-
-Как то раз посмотрел я документацию.
-Питание действительно - 5 V
-А вот данные - не более 3.6 V
-Я и сам удивился, столь не удобной (на мой взгляд) конфигурацции.
-Но это так.
-Вот документация на один из жуков:
-http://www.terraelectronica.ru/pdf/NSC/USBN9603-28.pdf
-
-*/
 	while ( ! (feof (fp) ) ) 
 	{
 		if (0 > fscanf (fp, "%s", cBuf ) )
@@ -99,9 +67,20 @@ http://www.terraelectronica.ru/pdf/NSC/USBN9603-28.pdf
 		{
 		char * cpTmp = cBuf;
 
-			//printf("scanned: >> %s\n", cBuf);
+			printf("scanned: >> %s\n", cBuf);
 
+#if !defined(ANTIFLOAT) 
 			fltTM = fltDIn = fltDOut = 0.0f;
+#else
+			memset (&qfltTM, 0, sizeof (QuasiFloatType) ) ;
+			memset (&qfltDIn, 0, sizeof (QuasiFloatType) ) ;
+			memset (&qfltDOut, 0, sizeof (QuasiFloatType) ) ;
+/*
+			fltTM_i=fltTM_f=     fltDIn_i=fltDIn_f=   fltDOut_i=fltDOut_f = 0;
+			fltTM_power=fltDIn_power=fltDOut_power=0;
+			fltTM_sgn=fltDIn_sgn=fltDOut_sgn='?';
+*/
+#endif /* !defined(ANTIFLOAT) */
 
 			/* memset (cBf0, 0, SMALL_BUF_SZ);
 			memset (cBf1, 0, SMALL_BUF_SZ);
@@ -110,12 +89,34 @@ http://www.terraelectronica.ru/pdf/NSC/USBN9603-28.pdf
 			while (*cpTmp) {  if (',' == *cpTmp) *cpTmp = ' '; cpTmp++; }
 			//printf("changed: >> %s\n", cBuf);
 
+#if !defined(ANTIFLOAT) 
 			sscanf(cBuf, "%f %f %f,", &fltTM,     &fltDIn,   &fltDOut );
-			//printf(" parced : >>  <%f> <%f> <%f>\n", fltTM, fltDIn, fltDOut );
+#else
+			sscanf(cBuf, "%d.%de%c0%d %d.%de%c0%d %d.%de%c0%d,",
+					&(qfltTM.integer),&(qfltTM.fraction),&(qfltTM.sgn),&(qfltTM.power),
+					&(qfltDIn.integer),&(qfltDIn.fraction),&(qfltDIn.sgn),&(qfltDIn.power),
+					&(qfltDOut.integer),&(qfltDOut.fraction),&(qfltDOut.sgn),&(qfltDOut.power)  );
+
+#endif /* !defined(ANTIFLOAT) */
+
+#if !defined(ANTIFLOAT) 
+			printf(" parced : >>  <%f> <%f> <%f>\n", fltTM, fltDIn, fltDOut );
+#else
+			printf(" parced : >>  %d.%de%c0%d %d.%de%c0%d %d.%de%c0%d]n",
+					qfltTM.integer,qfltTM.fraction,qfltTM.sgn,qfltTM.power,
+					qfltDIn.integer,qfltDIn.fraction,qfltDIn.sgn,qfltDIn.power,
+					qfltDOut.integer,qfltDOut.fraction,qfltDOut.sgn,qfltDOut.power  );
+#endif /* !defined(ANTIFLOAT) */
 
 			//_EnrollPoint("_AppendPoint", &pTimeChain, &fltTM, &fltDIn, &fltDOut, "emty");
-			EnrollPoint(&pTimeChain, &fltTM, &fltDIn, &fltDOut, "emty");
+#if !defined(ANTIFLOAT) 
+			EnrollPoint(&pTimeChain, &fltTM, &fltDIn, &fltDOut, "N/A");
+#else
+			EnrollPoint(&pTimeChain, &qfltTM, &qfltDIn, &qfltDOut, "N/A");
+#endif /* !defined(ANTIFLOAT) */
+
 			// usleep(500000);
+
 		}
 	}
 
@@ -124,7 +125,7 @@ http://www.terraelectronica.ru/pdf/NSC/USBN9603-28.pdf
 	printf("success 0 \n");
 
 	//_ProcessPoints("_ProcessPoints", pTimeChain);
-	ProcessPoints(pTimeChain);
+	//ProcessPoints(pTimeChain);
 
 	printf("success 1 \n");
 

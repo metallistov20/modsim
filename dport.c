@@ -21,12 +21,14 @@
 
 #include <asm/MC68EZ328.h>
 
+#include "dport.h"
+
 
 void PortD_Prepare()
 {
-	PDSEL = PD0 | PD1;//0xF0;
+	PDSEL = PD0 | PD1;
 
-	PDDIR = PD0 | PD1;//0xF0;
+	PDDIR = PD0 | PD1;
 
 	printf ("=========\n");
 }
@@ -44,4 +46,21 @@ void PortD_Down(unsigned char uchBit)
 void PortD_Up(unsigned char uchBit)
 {
 	PDDATA |= uchBit;
+}
+
+/* Port D probe routine, two bits are enough for current task */
+int PortD_Probe( )
+{
+	PortD_Prepare( );
+
+	PortD_Toggle(  PD0 );
+
+	while (1)
+	{
+		PortD_Toggle(  PD1 | PD0 );
+
+		/* Dubious */
+		usleep (10);
+	}
+	return 0;
 }

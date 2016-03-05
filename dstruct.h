@@ -23,12 +23,22 @@
 /* Old compiler does not operate such ANSI macros as __func__, et al */
 #define __func__ "_func_"
 
+typedef struct _QuasiFloatType
+{
+	int integer;
+	int fraction;
+	char sgn;// 10th power sign
+	int power; // 10th power abs. value [0..9]
+
+}  QuasiFloatType, *pQuasiFloatType;
+
 /* List of D+(d.IN) and D-(d.OUT) values with relative time points */
 typedef struct _TimepointType
 {
 	/* String to descibe this tm. point */
 	char * pcMarquee;
 
+#if !defined(ANTIFLOAT) 
 	/* D- , yellow pin */
 	float fltXval;
 
@@ -37,14 +47,30 @@ typedef struct _TimepointType
 
 	/* CVS's time stamp */
 	float fltAbsTime;
+#else
+	/* D- , yellow pin */
+	QuasiFloatType qfltXval;
+
+	/* D+ , blue pin */
+	QuasiFloatType qfltYval;
+
+	/* CVS's time stamp */
+	QuasiFloatType qfltAbsTime;
+#endif /* !defined(ANTIFLOAT) */
 
 	/* Next time point in the chain */
 	struct _TimepointType * pNext; 
 
 } TimepointType, *pTimepointType;
 
+int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
+#if !defined(ANTIFLOAT) 
+	float * pfltTm, float * pfltX, float * pfltY, 
+#else
+	pQuasiFloatType pqfltTm, pQuasiFloatType pqfltX, pQuasiFloatType pqfltY, 
+#endif /* !defined(ANTIFLOAT) */
+	char * pcMrq);
 
-int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, float * fltTm, float * fltX, float * fltY, char * pcMrq);
 
 int _ProcessPoints(const char * caller, pTimepointType pPointChainPar);
 

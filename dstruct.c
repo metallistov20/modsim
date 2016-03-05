@@ -22,9 +22,17 @@
 #include <stdlib.h>
 
 #include "dstruct.h"
+#include "dport.h"
 
 
-int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, float * fltTm, float * fltX, float * fltY, char * pcMrq)
+int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
+#if !defined(ANTIFLOAT) 
+	float * pfltTm, float * pfltX, float * pfltY, 
+#else
+	pQuasiFloatType pqfltTm, pQuasiFloatType pqfltX, pQuasiFloatType pqfltY, 
+#endif /* !defined(ANTIFLOAT) */
+	char * pcMrq)
+
 {
 pTimepointType pChild, pTempPointChain;
 
@@ -40,27 +48,55 @@ pTimepointType pChild, pTempPointChain;
 		/* check if successful */
 		if (NULL == *ppThisPointChain)
 		{
+#if !defined(ANTIFLOAT)
 			printf("[%s] %s:%s : ERROR: can't allocate memory for first element. %f: [X(%f),Y(%f)]  \n",
 			__FILE__, caller, __func__,
-			*fltTm, *fltX, *fltY);
+			*pfltTm, *fltpX, *pfltY);
+#else
+			printf("[%s] %s:%s : ERROR: can't allocate memory for first element. \n",
+			__FILE__, caller, __func__);
+#endif /* !defined(ANTIFLOAT) */
 
 			return (-8);
 		}
-		
-		(*ppThisPointChain)->fltXval = *fltX;
-		(*ppThisPointChain)->fltYval = *fltY;
-		(*ppThisPointChain)->fltAbsTime = *fltTm;
+
+#if !defined(ANTIFLOAT)
+		(*ppThisPointChain)->fltXval = *pfltX;
+		(*ppThisPointChain)->fltYval = *pfltY;
+		(*ppThisPointChain)->fltAbsTime = *pfltTm;
+#else
+		memcpy(& ((*ppThisPointChain)->qfltXval), pqfltX, sizeof(QuasiFloatType) );
+		memcpy(& ((*ppThisPointChain)->qfltYval), pqfltY, sizeof(QuasiFloatType) );
+		memcpy(& ((*ppThisPointChain)->qfltAbsTime), pqfltTm, sizeof(QuasiFloatType) );
+#endif /* !defined(ANTIFLOAT) */
 
 		(*ppThisPointChain)->pcMarquee = calloc (1, strlen (pcMrq) +1 );
 		strcpy( (*ppThisPointChain)->pcMarquee, pcMrq);
 
 #if DEBUG_DATA
+#if !defined(ANTIFLOAT)
 		printf("[%s] %s:%s : FIRST <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			(*ppThisPointChain)->fltAbsTime,
 			(*ppThisPointChain)->fltXval,
 			(*ppThisPointChain)->fltYval,
 			(*ppThisPointChain)->pcMarquee
 		);
+#else
+		printf("[%s] %s:%s : FIRST <%d.%dE%c0%d> <%d.%dE%c0%d> <%d.%dE%c0%d> <%s> \n", __FILE__, caller, __func__,
+
+			(*ppThisPointChain)->qfltAbsTime.integer,(*ppThisPointChain)->qfltAbsTime.fraction,
+			(*ppThisPointChain)->qfltAbsTime.sgn,(*ppThisPointChain)->qfltAbsTime.power,
+
+			(*ppThisPointChain)->qfltXval.integer,(*ppThisPointChain)->qfltXval.fraction,
+			(*ppThisPointChain)->qfltXval.sgn,(*ppThisPointChain)->qfltXval.power,
+
+			(*ppThisPointChain)->qfltYval.integer,(*ppThisPointChain)->qfltYval.fraction,
+			(*ppThisPointChain)->qfltYval.sgn,(*ppThisPointChain)->qfltYval.power,
+
+			(*ppThisPointChain)->pcMarquee
+		);
+#endif /* !defined(ANTIFLOAT) */
+
 #endif /* (DEBUG_DATA) */
 
 	}
@@ -73,28 +109,55 @@ pTimepointType pChild, pTempPointChain;
 
 		if (NULL == pTempPointChain)
 		{
+#if !defined(ANTIFLOAT)
 			printf("[%s] %s:%s : ERROR: can't allocate memory for next element. %f: [X(%f),Y(%f)]  \n", 
 			__FILE__, caller, __func__,
-			*fltTm, *fltX, *fltY);
+			*pfltTm, *pfltX, *pfltY);
+#else
+			printf("[%s] %s:%s : ERROR: can't allocate memory for next element.\n", 
+			__FILE__, caller, __func__);
+#endif /* !defined(ANTIFLOAT) */
 
 			return (-7);
 		}
 
-
-		pTempPointChain->fltXval = *fltX;
-		pTempPointChain->fltYval = *fltY;
+#if !defined(ANTIFLOAT)
+		pTempPointChain->fltXval = *pfltX;
+		pTempPointChain->fltYval = *pfltY;
 		pTempPointChain->fltAbsTime = *fltTm;
+#else
+		memcpy(& ( pTempPointChain->qfltXval), 	pqfltX, sizeof(QuasiFloatType) );
+		memcpy(& ( pTempPointChain->qfltYval), 	pqfltY, sizeof(QuasiFloatType) );
+		memcpy(& ( pTempPointChain->qfltAbsTime), pqfltTm, sizeof(QuasiFloatType) );
+#endif /* !defined(ANTIFLOAT) */
 
 		pTempPointChain->pcMarquee = calloc (1, strlen (pcMrq) +1 );
 		strcpy( pTempPointChain->pcMarquee, pcMrq);
 
 #if DEBUG_DATA
+#if !defined(ANTIFLOAT)
 		printf("[%s] %s:%s : NEXT <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			pTempPointChain->fltAbsTime,
 			pTempPointChain->fltXval,
 			pTempPointChain->fltYval,
 			pTempPointChain->pcMarquee
 		);
+#else
+		printf("[%s] %s:%s : NEXT <%d.%dE%c0%d> <%d.%dE%c0%d> <%d.%dE%c0%d> <%s> \n", __FILE__, caller, __func__,
+
+			pTempPointChain->qfltAbsTime.integer,pTempPointChain->qfltAbsTime.fraction,
+			pTempPointChain->qfltAbsTime.sgn,pTempPointChain->qfltAbsTime.power,
+
+			pTempPointChain->qfltXval.integer,pTempPointChain->qfltXval.fraction,
+			pTempPointChain->qfltXval.sgn,pTempPointChain->qfltXval.power,
+
+			pTempPointChain->qfltYval.integer,pTempPointChain->qfltYval.fraction,
+			pTempPointChain->qfltYval.sgn,pTempPointChain->qfltYval.power,
+
+			pTempPointChain->pcMarquee
+		);
+#endif /* !defined(ANTIFLOAT) */
+
 #endif /* (DEBUG_DATA) */
 
 		/* Skip everything, except last entry */
@@ -114,6 +177,10 @@ pTimepointType pChild, pTempPointChain;
 #endif /* #if 0, #else */
 }
 
+#define NPROC "not processed"
+#define MIN_THLD (-1.0)
+#define MAX_THLD (6.0)
+
 int _ProcessPoints(const char * caller, pTimepointType pPointChainPar)
 {
 pTimepointType pPointChain = pPointChainPar;
@@ -122,12 +189,67 @@ pTimepointType pPointChain = pPointChainPar;
 	while (NULL != pPointChain)
 	{
 //#if DEBUG_DATA
+#if !defined(ANTIFLOAT)
 		printf("[%s] %s:%s : <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			pPointChain->fltAbsTime,
 			pPointChain->fltXval,
 			pPointChain->fltYval,
 			pPointChain->pcMarquee
 		);
+#else
+		printf("[%s] %s:%s : <%d.%dE%c0%d> <%d.%dE%c0%d> <%d.%dE%c0%d> <%s> \n", __FILE__, caller, __func__,
+
+			pPointChain->qfltAbsTime.integer,pPointChain->qfltAbsTime.fraction,
+			pPointChain->qfltAbsTime.sgn,pPointChain->qfltAbsTime.power,
+
+			pPointChain->qfltXval.integer,pPointChain->qfltXval.fraction,
+			pPointChain->qfltXval.sgn,pPointChain->qfltXval.power,
+
+			pPointChain->qfltYval.integer,pPointChain->qfltYval.fraction,
+			pPointChain->qfltYval.sgn,pPointChain->qfltYval.power,
+
+			pPointChain->pcMarquee
+		);
+#endif /* !defined(ANTIFLOAT) */
+
+
+/*
+TTL уровни "0" 0,4В и "1" 2,4В
+Точнее - <0.4 и >2.4 сответственно
+
+Как то раз посмотрел я документацию.
+Питание действительно - 5 V
+А вот данные - не более 3.6 V
+Я и сам удивился, столь не удобной (на мой взгляд) конфигурацции. Но это так.
+
+USBN9603-28.pdf
+
+*/
+#if !defined(ANTIFLOAT)
+		if (pPointChain->fltXval <= MIN_THLD) 
+#else
+		if (0)
+#endif /* !defined(ANTIFLOAT) */
+
+			PortD_Down( PD0 );
+		else
+#if !defined(ANTIFLOAT)
+			if (pPointChain->fltXval >= MAX_THLD) 
+#else
+			if (0)
+#endif /* !defined(ANTIFLOAT) */
+
+				PortD_Down( PD0 );
+			else
+			{
+				pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
+				strcpy( pPointChain->pcMarquee, NPROC);
+
+				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
+					pPointChain->pcMarquee
+		);
+			}
+
 //#endif /* (DEBUG_DATA) */
 
 		/* Go to next record of chain */
