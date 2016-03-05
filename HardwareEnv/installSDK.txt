@@ -1,0 +1,22 @@
+1. Obtain "uClinux" (C) RT-Control, obtain uCsimm, obtain Linux PC
+
+2. On Linux PC run, in  /uClinux/RPMS/libc6:
+
+apt-get install rpm2cpio
+
+rpm2cpio m68k-coff-binutils-2.9.1-1.i386.rpm | cpio -idmv
+rpm2cpio m68k-pic-coff-binutils-2.9.1-1.i386.rpm | cpio -idmv
+rpm2cpio romdisk-0.9.1-1.i386.rpm | cpio -idmv
+rpm2cpio uC-libm-0.9.1-1.i386.rpm | cpio -idmv
+rpm2cpio uC-src-0.9.2-2.i386.rpm | cpio -idmv
+rpm2cpio genromfs-0.3-1.i386.rpm | cpio -idmv
+rpm2cpio m68k-coff-gcc-2.7.2.3-1.i386.rpm | cpio -idmv
+rpm2cpio m68k-pic-coff-gcc-2.7.2.3-1.i386.rpm | cpio -idmv
+rpm2cpio uC-libc-0.9.1-1.i386.rpm | cpio -idmv
+rpm2cpio uClinux-2.0.38.1pre5-2.i386.rpm | cpio -idmv
+
+# so you get <./opt> and <./usr> locally. Overwrite <opt> and <usr>
+in host's root directory. So you have workting crpsscompiler installed.
+
+
+
