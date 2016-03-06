@@ -236,11 +236,23 @@ qfltJiffy.fraction = 1;
 
 	/* Hardware Port 'D' processing */
 
+#if !defined(USB20)
+	/* USB 1.0 levels. Logical '1' */
 	if (fltXval >= LOGIC_1_CURR) 
+#else
+	/* USB 2.0 levels. Logical '1' */
+	if (fltXval >= LOGIC_1_CURR && fltXval <= LOGIC_1up_CURR) 
+#endif /* (!defined(USB20)) */
 
 		PortD_Up( PD0 );
 	else
-		if (fltXval <= LOGIC_0_CURR) 
+#if !defined(USB20)
+		/* USB 1.0 levels. Logical '0' */
+		if (fltXval <= LOGIC_0_CURR && fltXval <= LOGIC_0_CURR) 
+#else
+		/* USB 2.0 levels. Logical '0' */
+		if (fltXval >= LOGIC_0_CURR && fltXval <= LOGIC_0up_CURR) 
+#endif /* (!defined(USB20)) */
 
 			PortD_Down( PD0 );
 		else
@@ -314,32 +326,50 @@ qfltJiffy.fraction = 1;
 #else
 #endif /* defined(FAST_UCSIMM) */
 
-		/* Put marquee 'secPRC: xxx;' on the screen, so we are sure platform has not halted */
+		/* Put marquee 'secPRC: xxx;' on the screen, so we are sure platform is still not hanged up */
 		if (0 == qfltAbsTime.power)
-		if (iOldSecPRC!= qfltAbsTime.integer)
-		{iOldSecPRC=qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
-		
-		/* LOGIC_1_CURR */
+			if (iOldSecPRC!= qfltAbsTime.integer)
+				{iOldSecPRC=qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
+
+#if !defined(USB20)
+		/* USB 1.0 levels. Logical '1'.  LOGIC_1_CURR */
 		if (
 			('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
 			 (  (2 == qfltXval.integer)&&(4 <= qfltXval.fraction)   ) ||  (    3 <= qfltXval.integer   )    
 		)
-
+#else		
+		/* USB 2.0 levels. Logical '1'. LOGIC_1_CURR. 0.36V .. 0.44V */
+		if (
+			/* 3.60000e-01 .. 3.99999 e-01 */ /*last parenthesis: 600000-99999*/
+			(3 == qfltXval.integer) && (  ('-' == qfltXval.sgn ) && (1 <= qfltXval.power) && (600000 <= qfltXval.fraction)  )
+			||
+			/* 4.00000e-01 .. 4.400000e-01 */ /*last parenthesis: 00000-400000*/
+			(4 == qfltXval.integer) && (  ('-' == qfltXval.sgn ) && (1 <= qfltXval.power) && (400000 >= qfltXval.fraction)  )
+		)
+#endif /* (!defined(USB20)) */
 			PortD_Up( PD0 );
 
 		else
-			/* LOGIC_0_CURR */
+#if !defined(USB20)			
+			/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR */
 			if (
 				('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
 				 (  (0 == qfltXval.integer)&&(4 >= qfltXval.fraction)   ) 
 			)
-
-				PortD_Up( PD0 );
 			else
 				/* A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
-				PortD_Up( PD0 );
+				PortD_Down( PD0 );
 
 			/* Attention: overvoltage, U = 3.6++ V will be processed as logical zero, too. */
+
+#else		
+			/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR. -10V ..  -0.01V */
+			if (
+				1 /* assuming that rest cases are logical '0' */
+			)
+				PortD_Down( PD0 );
+#endif /* (!defined(USB20)) */
+
 
 #endif /* !defined(QUASIFLOAT) */
 

@@ -17,14 +17,20 @@
 # MA 02111-1307 USA
 #
 
-# Prefix to UCLIBS crosscompiler; May be empty in which case it won't be cross-, rather a reguolar compiler
+# Prefix to UCLIBS crosscompiler, may be commented-out in which case it won't be cross- rather a _reguolar compiation
 PREFIX=m68k-pic-coff-
 
 # (cross-)compiler
 CC=$(PREFIX)gcc
 
 # Headers. Can be omitted as long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
-CFLAGS=-O3 -DUCSIMM -DQUASIFLOAT -DDEB_UG_DATA -I/opt/uClinux/m68k-pic-coff/include
+CFLAGS=-O3 -DUCSIMM -DQUASIFLOAT -I/opt/uClinux/m68k-pic-coff/include
+
+# Excessive debug info not needed when program is ready. Spoils 'realtime' operating mode. Keep commented-out.
+# CFLAGS+=-DDEBUG_DATA
+
+# USB 2.0 signal levels for parsing CVS file data. Comment-out to parse CVS file data according to USB 1.0 signal levels.
+CFLAGS+= -DUSB20
 
 # As long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
 LDFLAGS=
@@ -39,4 +45,3 @@ m: modsim.o dstruct.o dport.o
 
 clean:
 	rm *.o *~ modsim *.coff m
-	
