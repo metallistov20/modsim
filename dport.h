@@ -44,6 +44,16 @@ LACD		23
 #define LCK 0x02
 #define ACD 0x01
 
+/*
+TTL levels "0" 0,4V and "1" 2,4V
+More precise: less than 0.4 and more than 2.4 correspondingly.
+Data - not more than 3.6 V. Some details: USBN9603-28.pdf
+*/
+#define LOGIC_0_CURR	0.4
+#define LOGIC_1_CURR	2.4
+#define OVERDOSE_CURR 	3.6
+
+
 #endif /* _DPORT_H_ */
 
 

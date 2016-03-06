@@ -28,7 +28,7 @@
 
 int iOldSecPRC;
 
-/* Time-measurement variables */
+/* Time measurement variables */
 struct timeval starttimePROC, endtimePROC;
 
 int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
@@ -177,12 +177,6 @@ pTimepointType pChild, pTempPointChain;
 	return (0);
 }
 
-#define NPROC "not processed"
-#define MIN_THLD (-1.0)
-#define MAX_THLD (6.0)
-
-
-
 int ProcRealAndRel(
 #if !defined(ANTIFLOAT)
 	float fltRealTime,
@@ -239,45 +233,41 @@ qfltJiffy.fraction = 1;
 		fltRealTime,
 		fltRelTime );
 
-////////////////////////////
-	if (fltXval <= MIN_THLD) 
+	/* Hardware Port 'D' processing */
 
-		PortD_Down( PD0 );
+	if (fltXval >= LOGIC_1_CURR) 
+
+		PortD_Up( PD0 );
 	else
-		if (fltXval >= MAX_THLD) 
+		if (fltXval <= LOGIC_0_CURR) 
 
-			PortD_Up( PD0 );
+			PortD_Down( PD0 );
 		else
 		{
 /*
-f.off			pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
+Leave excessive current (OVERDOSE_CURR) unprocessed, and leave other 'dubious' cases unprocessed:
+			pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
 			strcpy( pPointChain->pcMarquee, NPROC);
-*/
 
-/*
-DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
+*/
 #if DEBUG_DATA
 				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
 					pPointChain->pcMarquee	);
-#endif (DEBUG_DATA) */
+#endif (DEBUG_DATA)
 		}
-////////////////////////////
 
 #else
 
+	qfltRealTime.integer = 			(qfltRealTime.integer < 0)?
+		(qfltRealTime.integer * 1000000) - (qfltRealTime.fraction / 10):
+		(qfltRealTime.integer * 1000000) + (qfltRealTime.fraction / 10);
 
-		qfltRealTime.integer = 			(qfltRealTime.integer < 0)?
-			(qfltRealTime.integer * 1000000) - (qfltRealTime.fraction / 10):
-			(qfltRealTime.integer * 1000000) + (qfltRealTime.fraction / 10);
-
-// first cycle must be skipable on UCSIMM (start)
 	/* Take current time */
 	gettimeofday(&endtimePROC,0);
 
 	/* Compute time elapsed since head of list processing till now */
 	qfltRelTime.integer = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
 		+ endtimePROC.tv_usec - starttimePROC.tv_usec;
-// first cycle must be skipable on UCSIMM (end)
 
 
 #if defined(FAST_UCSIMM)
@@ -285,10 +275,6 @@ DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
 		qfltRealTime.integer,	qfltRelTime.integer );
 #else
 #endif /* defined(FAST_UCSIMM) */
-
-
-// first cycle must be skipable on UCSIMM
-// 	do 	
 
 	if (qfltRelTime.integer < 0)
 		 _right = qfltRelTime.integer, _left = qfltRealTime.integer;
@@ -322,8 +308,6 @@ DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
 		printf(",");
 #endif /* defined(FAST_UCSIMM) */
 	}
-// first cycle must be skipable on UCSIMM
-//	} while (qfltRelTime.integer < qfltRealTime.integer);
 
 #if defined(FAST_UCSIMM)
 	/* Now they're equal or least 'relative tm' is not less than 'real tm' */
@@ -333,40 +317,35 @@ DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
 #else
 #endif /* defined(FAST_UCSIMM) */
 
-////////////////////////////
-/*f.off
+
+/*
+Not displayed:
 		if (0 == pPointChain->qfltAbsTime.power)
 		if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
 		{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
 */
+		
+		/* LOGIC_1_CURR */
+		if (
+			('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
+			 (  (2 == qfltXval.integer)&&(4 <= qfltXval.fraction)   ) ||  (    3 <= qfltXval.integer   )    
+		)
 
-/*
-TTL levels "0" 0,4V and "1" 2,4V
-More precise: less than 0.4 and more than 2.4 correspondingly
-
-Data - not more than 3.6 V. Some details: USBN9603-28.pdf
-*/
-
-
-		if ( ('-' == qfltXval.sgn) && (2 == qfltXval.power) 
-		&& (4 == qfltXval.integer || (3 == qfltXval.integer && 0 != qfltXval.fraction) )  )
-
-			PortD_Down( PD0 );
+			PortD_Up( PD0 );
 
 		else
-			if ( ('-' == qfltXval.sgn) && (2 < qfltXval.power) )
+			/* LOGIC_0_CURR */
+			if (
+				('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
+				 (  (0 == qfltXval.integer)&&(4 >= qfltXval.fraction)   ) 
+			)
 
 				PortD_Up( PD0 );
 			else
-			{
-/*
-f.off
-				pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
-				strcpy( pPointChain->pcMarquee, NPROC);
-*/
-			}
-////////////////////////////
+				/* A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
+				PortD_Up( PD0 );
 
+			/* Attention: overvoltage, U = 3.6++ V will be processed as logical zero, too. */
 
 #endif /* !defined(ANTIFLOAT) */
 
