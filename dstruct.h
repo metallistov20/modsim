@@ -20,19 +20,33 @@
 #ifndef _DSTUCT_H_
 #define _DSTUCT_H_
 
+
 #if defined(UCSIMM)
+
 /* Old compiler does not operate such ANSI macros as __func__, et al */
 #define __func__ "_func_"
+
 #endif /* defined(UCSIMM) */
 
+
+#if defined(ANTIFLOAT) 
 typedef struct _QuasiFloatType
 {
+	/* Integer part of quasi-float */
 	int integer;
+
+	/* Fractal part of quasi-float */
 	int fraction;
-	char sgn;// 10th power sign
-	int power; // 10th power abs. value [0..9]
+
+	/* 10th power sign */
+	char sgn;
+
+	/* 10th power absolute value, can be any of [0..9] */
+	int power; 
 
 }  QuasiFloatType, *pQuasiFloatType;
+#endif /* defined(ANTIFLOAT) */
+
 
 /* List of D+(d.IN) and D-(d.OUT) values with relative time points */
 typedef struct _TimepointType

@@ -185,43 +185,44 @@ pTimepointType pChild, pTempPointChain;
 
 int ProcRealAndRel(
 #if !defined(ANTIFLOAT)
-	float fltRealTime, float fltRelTime
+	float fltRealTime /*, float fltRelTime */
 #else
-	QuasiFloatType qfltRealTime, QuasiFloatType qfltRelTime
+	QuasiFloatType qfltRealTime /*, QuasiFloatType qfltRelTime */
 #endif /* !defined(ANTIFLOAT) */
 	)
 {
+#if !defined(ANTIFLOAT)
 float fltJiffy = 1.0;
+float fltRelTime;
+#else
+float qfltJiffy;
+QuasiFloatType qfltRelTime
+#endif /* !defined(ANTIFLOAT) */
 
-	/* Divide seconds by 10e6 since we're limited by usage of <usleep>, which is 
-	same on both platforms  */
+	/* Operate uSeconds multiplied by 10e6 because <usleep> accepts	integer parameters only */
 	fltRealTime = fltRealTime*1000000;
 
-	printf("[%s] : solid: %f, shiftable: %f \n", __FILE__, /* caller, */
-		fltRealTime,
-		fltRelTime );
+	printf("[%s] : <BEFORE TIME SHIFTING> solid: %f\n", __FILE__, /* caller, */	fltRealTime	);
 
-	while (fltRelTime < fltRealTime)
-	{
-		usleep (fltJiffy);
-
-		/* Take current time */
+	do 
+	{	/* Take current time */
 		gettimeofday(&endtimePROC,0);
 
 		/* Compute how much time elapsed since head of list processing till now */
 		fltRelTime = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
 			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
 
-/* printf("[%s] : <SHIFTED> solid: %f, shiftable: %f \n", __FILE__, 
-		fltRealTime,
-		fltRelTime ); */
-	}
+		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
+		usleep (fltJiffy);
+
+		printf("[%s] : <TIME SHIFTING> solid: %f, shiftable: %f \n", __FILE__, fltRealTime,	fltRelTime ); 
+
+	} while (fltRelTime < fltRealTime);
 	
 	/* Now they're equal or */
-	printf("[%s] : <SHIFTED> will pretend like <%f>, is same as <%f> \n", __FILE__, /* caller, */
+	printf("[%s] : <AFTER TIME SHIFTING> will pretend like <%f>, is same as <%f> \n", __FILE__,
 		fltRealTime,
 		fltRelTime );
-
 }
 
 int _ProcessPoints(const char * caller, pTimepointType pPointChainPar)
@@ -263,28 +264,17 @@ double timeusePROC;
 #endif /* (DEBUG_DATA) */
 
 /*
-TTL уровни "0" 0,4В и "1" 2,4В
-Точнее - <0.4 и >2.4 сответственно
+TTL levels "0" 0,4V и "1" 2,4V
+More precise - <0.4 and  >2.4 correspondingly
 
-Как то раз посмотрел я документацию.
-Питание действительно - 5 V
-А вот данные - не более 3.6 V
-Я и сам удивился, столь не удобной (на мой взгляд) конфигурацции. Но это так.
-
-USBN9603-28.pdf
-
+Data - not more than 3.6 V. Some details: USBN9603-28.pdf
 */
-		/* Take current time */
-		gettimeofday(&endtimePROC,0);
 
-		/* Compute how much time elapsed since head of list processing till now */
-		timeusePROC = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
-			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
 
 #if !defined(ANTIFLOAT)
 
 		if (0.0 != pPointChain->fltAbsTime )
-			ProcRealAndRel(pPointChain->fltAbsTime, (float)timeusePROC);
+			ProcRealAndRel(pPointChain->fltAbsTime);
 
 		/* printf("[%s] %s:  <%f> : relative time elapsed: %f microseconds\n", __FILE__, caller, 
 			fltAbsTime,
