@@ -112,7 +112,7 @@ if (0 == qfltTM.power) if (iOldSec!= qfltTM.integer){iOldSec=qfltTM.integer; pri
 
 	fclose(fp);
 
-	printf("Issuing USB-curve-data on Pin #0 Port 'D'\n", FILE_NAME);
+	printf("Issuing USB-curve-data on Pin #0 Port 'D'\n");
 
 	PortD_Prepare( );
 	ProcessPoints(pTimeChain);

@@ -21,11 +21,15 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include <sys/time.h>
+
 #include "dstruct.h"
 #include "dport.h"
 
-//int iOldSec;
 int iOldSecPRC;
+
+/* Time-measurement variables */
+struct timeval starttimePROC, endtimePROC;
 
 int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
 #if !defined(ANTIFLOAT) 
@@ -49,7 +53,7 @@ pTimepointType pChild, pTempPointChain;
 #if !defined(ANTIFLOAT)
 			printf("[%s] %s:%s : ERROR: can't allocate memory for first element. %f: [X(%f),Y(%f)]  \n",
 			__FILE__, caller, __func__,
-			*pfltTm, *fltpX, *pfltY);
+			*pfltTm, *pfltX, *pfltY);
 #else
 			printf("[%s] %s:%s : ERROR: can't allocate memory for first element. \n",
 			__FILE__, caller, __func__);
@@ -122,7 +126,7 @@ pTimepointType pChild, pTempPointChain;
 #if !defined(ANTIFLOAT)
 		pTempPointChain->fltXval = *pfltX;
 		pTempPointChain->fltYval = *pfltY;
-		pTempPointChain->fltAbsTime = *fltTm;
+		pTempPointChain->fltAbsTime = *pfltTm;
 #else
 		memcpy(& ( pTempPointChain->qfltXval), 	pqfltX, sizeof(QuasiFloatType) );
 		memcpy(& ( pTempPointChain->qfltYval), 	pqfltY, sizeof(QuasiFloatType) );
@@ -177,9 +181,58 @@ pTimepointType pChild, pTempPointChain;
 #define MIN_THLD (-1.0)
 #define MAX_THLD (6.0)
 
+
+
+int ProcRealAndRel(
+#if !defined(ANTIFLOAT)
+	float fltRealTime, float fltRelTime
+#else
+	QuasiFloatType qfltRealTime, QuasiFloatType qfltRelTime
+#endif /* !defined(ANTIFLOAT) */
+	)
+{
+float fltJiffy = 1.0;
+
+	/* Divide seconds by 10e6 since we're limited by usage of <usleep>, which is 
+	same on both platforms  */
+	fltRealTime = fltRealTime*1000000;
+
+	printf("[%s] : solid: %f, shiftable: %f \n", __FILE__, /* caller, */
+		fltRealTime,
+		fltRelTime );
+
+	while (fltRelTime < fltRealTime)
+	{
+		usleep (fltJiffy);
+
+		/* Take current time */
+		gettimeofday(&endtimePROC,0);
+
+		/* Compute how much time elapsed since head of list processing till now */
+		fltRelTime = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
+			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
+
+/* printf("[%s] : <SHIFTED> solid: %f, shiftable: %f \n", __FILE__, 
+		fltRealTime,
+		fltRelTime ); */
+	}
+	
+	/* Now they're equal or */
+	printf("[%s] : <SHIFTED> will pretend like <%f>, is same as <%f> \n", __FILE__, /* caller, */
+		fltRealTime,
+		fltRelTime );
+
+}
+
 int _ProcessPoints(const char * caller, pTimepointType pPointChainPar)
 {
 pTimepointType pPointChain = pPointChainPar;
+float fltAbsTime;
+
+double timeusePROC;
+
+	/* Take first time */
+	gettimeofday(&starttimePROC,0);
 
 	/* Process each entry of chain */
 	while (NULL != pPointChain)
@@ -221,15 +274,36 @@ TTL уровни "0" 0,4В и "1" 2,4В
 USBN9603-28.pdf
 
 */
-if (0 == pPointChain->qfltAbsTime.power)
-if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
-{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
+		/* Take current time */
+		gettimeofday(&endtimePROC,0);
 
-//		PortD_Toggle( PD0 );
+		/* Compute how much time elapsed since head of list processing till now */
+		timeusePROC = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
+			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
+
+#if !defined(ANTIFLOAT)
+
+		if (0.0 != pPointChain->fltAbsTime )
+			ProcRealAndRel(pPointChain->fltAbsTime, (float)timeusePROC);
+
+		/* printf("[%s] %s:  <%f> : relative time elapsed: %f microseconds\n", __FILE__, caller, 
+			fltAbsTime,
+			timeusePROC ); */
+#else
+		printf("[%s] %s:  <%d.%dE%c0%d> : relative time elapsed: %d microseconds\n", __FILE__, caller, 
+			pPointChain->qfltAbsTime.integer,pPointChain->qfltAbsTime.fraction,
+			pPointChain->qfltAbsTime.sgn,pPointChain->qfltAbsTime.power,
+			timeusePROC );
+#endif /* !defined(ANTIFLOAT) */
+
 
 #if !defined(ANTIFLOAT)
 		if (pPointChain->fltXval <= MIN_THLD) 
 #else
+		if (0 == pPointChain->qfltAbsTime.power)
+		if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
+		{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
+
 		if ( ('-' == pPointChain->qfltXval.sgn) && (2 == pPointChain->qfltXval.power) 
 		&& (4 == pPointChain->qfltXval.integer || (3 == pPointChain->qfltXval.integer && 0 != pPointChain->qfltXval.fraction) )  )
 #endif /* !defined(ANTIFLOAT) */
@@ -249,12 +323,12 @@ if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
 				pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
 				strcpy( pPointChain->pcMarquee, NPROC);
 /*
+DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
+#if DEBUG_DATA
 				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
 					pPointChain->pcMarquee	);
-*/
+#endif (DEBUG_DATA) */
 			}
-
-
 
 		/* Go to next record of chain */
 		pPointChain = pPointChain->pNext;

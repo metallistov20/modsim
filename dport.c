@@ -19,48 +19,59 @@
 
 #include <stdio.h>
 
+#if defined(UCSIMM)
 #include <asm/MC68EZ328.h>
+#endif /* (UCSIMM) */
 
 #include "dport.h"
 
 
 void PortD_Prepare()
 {
+#if defined(UCSIMM)
 	PDSEL = PD0 | PD1;
 
 	PDDIR = PD0 | PD1;
 
 	printf ("=========\n");
+#endif /* (UCSIMM) */
 }
 
 void PortD_Toggle(unsigned char uchBit)
 {
+#if defined(UCSIMM)
 	PDDATA ^= uchBit;
+#endif /* (UCSIMM) */
 }
 
 void PortD_Down(unsigned char uchBit)
 {
+#if defined(UCSIMM)
 	PDDATA &= ~uchBit;
+#endif /* (UCSIMM) */
 }
 
 void PortD_Up(unsigned char uchBit)
 {
+#if defined(UCSIMM)
 	PDDATA |= uchBit;
+#endif /* (UCSIMM) */
 }
 
 /* Port D probe routine, two bits are enough for current task */
-int PortD_Probe( )
+void PortD_Probe( )
 {
+#if defined(UCSIMM)
 	PortD_Prepare( );
 
 	PortD_Toggle(  PD0 );
 
 	while (1)
 	{
-		PortD_Toggle(  /*PD1 |*/ PD0 );
+		PortD_Toggle(  PD1 | PD0 );
 
 		/* Dubious */
 		usleep (10);
 	}
-	return 0;
+#endif /* (UCSIMM) */
 }

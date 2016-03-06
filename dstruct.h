@@ -20,8 +20,10 @@
 #ifndef _DSTUCT_H_
 #define _DSTUCT_H_
 
+#if defined(UCSIMM)
 /* Old compiler does not operate such ANSI macros as __func__, et al */
 #define __func__ "_func_"
+#endif /* defined(UCSIMM) */
 
 typedef struct _QuasiFloatType
 {

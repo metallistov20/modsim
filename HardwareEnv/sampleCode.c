@@ -28,7 +28,31 @@
 
 #include<asm/MC68EZ328.h>
 
+#if defined (SPEED_PROFILING)
+#include <sys/time.h>
+struct timeval starttimeDETACH,endtimeDETACH;
+#endif /* (SPEED_PROFILING) */
+
+void _function_of_HW_detach ()
+{
+#if defined (SPEED_PROFILING)
+ gettimeofday(&starttimeDETACH,0);
+#endif /* (SPEED_PROFILING) */
+
+>>>> HW detach code <<<
+
+#if defined (SPEED_PROFILING)
+ gettimeofday(&endtimeDETACH,0);
+ double timeuseDETACH = 1000000*(endtimeDETACH.tv_sec - starttimeDETACH.tv_sec) + endtimeDETACH.tv_usec - starttimeDETACH.tv_usec;
+ printf("[hotplug_storage:AFTER_FRAGMENT][pid = %d] time elapsed: %.3f milliseconds\n", getpid(), timeuseDETACH/1000);
+#endif /* (SPEED_PROFILING) */
+
+}
+
+
 #if 0
+
+
 int main( )
 {
 	PDSEL = 0xF0;
