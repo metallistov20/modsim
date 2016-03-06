@@ -185,20 +185,23 @@ pTimepointType pChild, pTempPointChain;
 
 int ProcRealAndRel(
 #if !defined(ANTIFLOAT)
-	float fltRealTime /*, float fltRelTime */
+	float fltRealTime,
+	float fltXval
 #else
-	QuasiFloatType qfltRealTime /*, QuasiFloatType qfltRelTime */
+	QuasiFloatType qfltRealTime,
+	QuasiFloatType qfltXval
 #endif /* !defined(ANTIFLOAT) */
 	)
 {
 #if !defined(ANTIFLOAT)
-float fltJiffy = 1.0;
 float fltRelTime;
 float _left, _right;
+float fltJiffy = 1.0;
 #else
-QuasiFloatType qfltJiffy; 
 QuasiFloatType qfltRelTime;
 int _left, _right;
+QuasiFloatType qfltJiffy; 
+qfltJiffy.fraction = 1;
 #endif /* !defined(ANTIFLOAT) */
 
 
@@ -207,6 +210,8 @@ int _left, _right;
 	fltRealTime = fltRealTime*1000000;
 
 	printf("[%s] : <BEFORE TIME SHIFTING> real tm.: %f\n", __FILE__, /* caller, */	fltRealTime	);
+
+	if (0.0 == fltRealTime ) return;
 
 	do 
 	{	/* Take current time */
@@ -233,8 +238,33 @@ int _left, _right;
 	printf("[%s] : <AFTER TIME SHIFTING> will pretend like <%f>, is same as <%f> \n", __FILE__,
 		fltRealTime,
 		fltRelTime );
+
+////////////////////////////
+	if (fltXval <= MIN_THLD) 
+
+		PortD_Down( PD0 );
+	else
+		if (fltXval >= MAX_THLD) 
+
+			PortD_Up( PD0 );
+		else
+		{
+/*
+f.off			pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
+			strcpy( pPointChain->pcMarquee, NPROC);
+*/
+
+/*
+DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
+#if DEBUG_DATA
+				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
+					pPointChain->pcMarquee	);
+#endif (DEBUG_DATA) */
+		}
+////////////////////////////
+
 #else
-		qfltJiffy.fraction = 1;
+
 
 		qfltRealTime.integer = 			(qfltRealTime.integer < 0)?
 			(qfltRealTime.integer * 1000000) - (qfltRealTime.fraction / 10):
@@ -244,7 +274,7 @@ int _left, _right;
 	/* Take current time */
 	gettimeofday(&endtimePROC,0);
 
-	/* Compute how much time elapsed since head of list processing till now */
+	/* Compute time elapsed since head of list processing till now */
 	qfltRelTime.integer = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
 		+ endtimePROC.tv_usec - starttimePROC.tv_usec;
 // first cycle must be skipable on UCSIMM (end)
@@ -265,7 +295,9 @@ int _left, _right;
 	else
 		 _left = qfltRelTime.integer, _right = qfltRealTime.integer;
 
-	if (0 != qfltRealTime.integer) while (/* qfltRelTime.integer*/ _right < /* qfltRealTime.integer */ _left )
+	if (0 == qfltRealTime.integer) return;
+
+	while (/* qfltRelTime.integer*/ _right < /* qfltRealTime.integer */ _left )
 	{
 		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
 		usleep (qfltJiffy.fraction);
@@ -300,6 +332,40 @@ int _left, _right;
 		qfltRelTime.integer );
 #else
 #endif /* defined(FAST_UCSIMM) */
+
+////////////////////////////
+/*f.off
+		if (0 == pPointChain->qfltAbsTime.power)
+		if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
+		{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
+*/
+
+/*
+TTL levels "0" 0,4V and "1" 2,4V
+More precise: less than 0.4 and more than 2.4 correspondingly
+
+Data - not more than 3.6 V. Some details: USBN9603-28.pdf
+*/
+
+
+		if ( ('-' == qfltXval.sgn) && (2 == qfltXval.power) 
+		&& (4 == qfltXval.integer || (3 == qfltXval.integer && 0 != qfltXval.fraction) )  )
+
+			PortD_Down( PD0 );
+
+		else
+			if ( ('-' == qfltXval.sgn) && (2 < qfltXval.power) )
+
+				PortD_Up( PD0 );
+			else
+			{
+/*
+f.off
+				pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
+				strcpy( pPointChain->pcMarquee, NPROC);
+*/
+			}
+////////////////////////////
 
 
 #endif /* !defined(ANTIFLOAT) */
@@ -344,59 +410,12 @@ double timeusePROC;
 #endif /* !defined(ANTIFLOAT) */
 #endif /* (DEBUG_DATA) */
 
-/*
-TTL levels "0" 0,4V и "1" 2,4V
-More precise - <0.4 and  >2.4 correspondingly
-
-Data - not more than 3.6 V. Some details: USBN9603-28.pdf
-*/
-
 
 #if !defined(ANTIFLOAT)
-
-		if (0.0 != pPointChain->fltAbsTime )
-			ProcRealAndRel(pPointChain->fltAbsTime);
-
-		/* printf("[%s] %s:  <%f> : relative time elapsed: %f microseconds\n", __FILE__, caller, 
-			fltAbsTime,
-			timeusePROC ); */
+		ProcRealAndRel(pPointChain->fltAbsTime, pPointChain->fltXval);
 #else
-		ProcRealAndRel(pPointChain->qfltAbsTime);
+		ProcRealAndRel(pPointChain->qfltAbsTime, pPointChain->qfltXval);
 #endif /* !defined(ANTIFLOAT) */
-
-
-#if !defined(ANTIFLOAT)
-		if (pPointChain->fltXval <= MIN_THLD) 
-#else
-		if (0 == pPointChain->qfltAbsTime.power)
-		if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
-		{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
-
-		if ( ('-' == pPointChain->qfltXval.sgn) && (2 == pPointChain->qfltXval.power) 
-		&& (4 == pPointChain->qfltXval.integer || (3 == pPointChain->qfltXval.integer && 0 != pPointChain->qfltXval.fraction) )  )
-#endif /* !defined(ANTIFLOAT) */
-
-			PortD_Down( PD0 );
-
-		else
-#if !defined(ANTIFLOAT)
-			if (pPointChain->fltXval >= MAX_THLD) 
-#else
-			if ( ('-' == pPointChain->qfltXval.sgn) && (2 < pPointChain->qfltXval.power) )
-#endif /* !defined(ANTIFLOAT) */
-
-				PortD_Up( PD0 );
-			else
-			{
-				pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
-				strcpy( pPointChain->pcMarquee, NPROC);
-/*
-DEBUG: this_will_mince_the_very_idea_behind_current_RT_process
-#if DEBUG_DATA
-				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
-					pPointChain->pcMarquee	);
-#endif (DEBUG_DATA) */
-			}
 
 		/* Go to next record of chain */
 		pPointChain = pPointChain->pNext;

@@ -18,13 +18,13 @@
 #
 
 # Prefix to UCLIBS crosscompiler; May be empty in which case it won't be cross-, rather a reguolar compiler
-# PREFIX=m68k-pic-coff-
+PREFIX=m68k-pic-coff-
 
 # (cross-)compiler
 CC=$(PREFIX)gcc
 
 # Headers. Can be omitted as long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
-#CFLAGS=-O3 -DUCSIMM -DANTIFLOAT -DDEB_UG_DATA -I/opt/uClinux/m68k-pic-coff/include
+CFLAGS=-O3 -DUCSIMM -DANTIFLOAT -DDEB_UG_DATA -I/opt/uClinux/m68k-pic-coff/include
 
 # As long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
 LDFLAGS=
