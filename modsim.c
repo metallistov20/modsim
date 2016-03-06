@@ -31,11 +31,11 @@ FILE *fp = NULL;
 
 char cBuf [LARGE_BUF_SZ];
 
-#if !defined(ANTIFLOAT) 
+#if !defined(QUASIFLOAT) 
 	float fltTM, fltDIn, fltDOut;
 #else
 	QuasiFloatType qfltTM, qfltDIn, qfltDOut;
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 pTimepointType pTimeChain;
 
@@ -45,12 +45,12 @@ int main ()
 {
 	if ( NULL == (fp = fopen (FILE_NAME, "r") ) )
 	{
-		printf("can't open \n");
+		printf("[%s] %s: can't open file <%s> \n", __FILE__, __func__ , FILE_NAME);
 
 		return P_ERROR;
 	}
 
-	printf("Loading USB-curve-data via NFS from file <%s>\n", FILE_NAME);
+	printf("[%s] %s: loading USB-curve-data via NFS from file <%s>\n", __FILE__, __func__, FILE_NAME);
 
 	while ( ! (feof (fp) ) ) 
 	{
@@ -63,10 +63,10 @@ int main ()
 		char * cpTmp = cBuf;
 
 #if DEBUG_DATA
-			printf("scanned: >> %s\n", cBuf);
+			printf("[%s] %s: scanned: < %s >\n", __FILE__, __func__, cBuf);
 #endif /* (DEBUG_DATA) */
 
-#if !defined(ANTIFLOAT) 
+#if !defined(QUASIFLOAT) 
 			fltTM = fltDIn = fltDOut = 0.0f;
 #else
 
@@ -74,12 +74,16 @@ int main ()
 			memset (&qfltDIn, 0, sizeof (QuasiFloatType) ) ;
 			memset (&qfltDOut, 0, sizeof (QuasiFloatType) ) ;
 
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
-			while (*cpTmp) {  if (',' == *cpTmp) *cpTmp = ' '; cpTmp++; }
-			//printf("changed: >> %s\n", cBuf);
+			/* In the string obtained */
+			while (*cpTmp)
 
-#if !defined(ANTIFLOAT) 
+				/* replace all commas with spaces, to let the <scanf()> parse it */
+				{ if (',' == *cpTmp) *cpTmp = ' '; cpTmp++; }
+	
+
+#if !defined(QUASIFLOAT) 
 			sscanf(cBuf, "%f %f %f,", &fltTM,     &fltDIn,   &fltDOut );
 #else
 			sscanf(cBuf, "%d.%de%c0%d %d.%de%c0%d %d.%de%c0%d,",
@@ -89,39 +93,40 @@ int main ()
 
 if (0 == qfltTM.power) if (iOldSec!= qfltTM.integer){iOldSec=qfltTM.integer; printf("sec: %d; ", iOldSec); fflush(stdout); }
 
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 #if DEBUG_DATA
-#if !defined(ANTIFLOAT) 
-			printf(" parced : >>  <%f> <%f> <%f>\n", fltTM, fltDIn, fltDOut );
+#if !defined(QUASIFLOAT) 
+			printf("[%s] %s: parsed :  <%f> <%f> <%f>\n", __FILE__, __func__, fltTM, fltDIn, fltDOut );
 #else
-			printf(" parced : >>  %d.%de%c0%d %d.%de%c0%d %d.%de%c0%d]\n",
+			printf("[%s] %s: parsed :  <%d.%de%c0%d>  <%d.%de%c0%d>  <%d.%de%c0%d> \n",
+					__FILE__, __func__, 
 					qfltTM.integer,qfltTM.fraction,qfltTM.sgn,qfltTM.power,
 					qfltDIn.integer,qfltDIn.fraction,qfltDIn.sgn,qfltDIn.power,
 					qfltDOut.integer,qfltDOut.fraction,qfltDOut.sgn,qfltDOut.power  );
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 #endif /* (DEBUG_DATA) */
 
-#if !defined(ANTIFLOAT) 
+#if !defined(QUASIFLOAT) 
 			EnrollPoint(&pTimeChain, &fltTM, &fltDIn, &fltDOut, "N/A");
 #else
 			EnrollPoint(&pTimeChain, &qfltTM, &qfltDIn, &qfltDOut, "N/A");
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 		}
 	}
 
 	fclose(fp);
 
-	printf("Issuing USB-curve-data on Pin #0 Port 'D'\n");
+	printf("\n[%s] %s: issuing USB-curve-data on Pin #0 Port 'D'\n", __FILE__, __func__);
 
 	PortD_Prepare( );
 	ProcessPoints(pTimeChain);
 
-	printf("Disposing memory allocations\n");
+	printf("\n[%s] %s: disposing memory allocations\n", __FILE__, __func__);
 
 	DeletePoints(&pTimeChain);
 
-	printf("Done (success) \n"); fflush(stdout);
+	printf("[%s] %s: done (success) \n", __FILE__, __func__); fflush(stdout);
 
 	return P_SUCCESS;
 }

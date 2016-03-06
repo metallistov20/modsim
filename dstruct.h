@@ -23,13 +23,13 @@
 
 #if defined(UCSIMM)
 
-/* Old compiler does not operate such ANSI macros as __func__, et al */
+/* Old cross compiler does not operate such ANSI macro as __func__ */
 #define __func__ "_func_"
 
 #endif /* defined(UCSIMM) */
 
 
-#if defined(ANTIFLOAT) 
+#if defined(QUASIFLOAT) 
 typedef struct _QuasiFloatType
 {
 	/* Integer part of quasi-float */
@@ -45,7 +45,7 @@ typedef struct _QuasiFloatType
 	int power; 
 
 }  QuasiFloatType, *pQuasiFloatType;
-#endif /* defined(ANTIFLOAT) */
+#endif /* defined(QUASIFLOAT) */
 
 
 /* List of D+(d.IN) and D-(d.OUT) values with relative time points */
@@ -54,7 +54,7 @@ typedef struct _TimepointType
 	/* String to descibe this tm. point */
 	char * pcMarquee;
 
-#if !defined(ANTIFLOAT) 
+#if !defined(QUASIFLOAT) 
 	/* D- , yellow pin */
 	float fltXval;
 
@@ -72,7 +72,7 @@ typedef struct _TimepointType
 
 	/* CVS's time stamp */
 	QuasiFloatType qfltAbsTime;
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 	/* Next time point in the chain */
 	struct _TimepointType * pNext; 
@@ -80,11 +80,11 @@ typedef struct _TimepointType
 } TimepointType, *pTimepointType;
 
 int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
-#if !defined(ANTIFLOAT) 
+#if !defined(QUASIFLOAT) 
 	float * pfltTm, float * pfltX, float * pfltY, 
 #else
 	pQuasiFloatType pqfltTm, pQuasiFloatType pqfltX, pQuasiFloatType pqfltY, 
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 	char * pcMrq);
 
 

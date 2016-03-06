@@ -32,11 +32,11 @@ int iOldSecPRC;
 struct timeval starttimePROC, endtimePROC;
 
 int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
-#if !defined(ANTIFLOAT) 
+#if !defined(QUASIFLOAT) 
 	float * pfltTm, float * pfltX, float * pfltY, 
 #else
 	pQuasiFloatType pqfltTm, pQuasiFloatType pqfltX, pQuasiFloatType pqfltY, 
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 	char * pcMrq)
 
 {
@@ -50,19 +50,19 @@ pTimepointType pChild, pTempPointChain;
 		/* check if successful */
 		if (NULL == *ppThisPointChain)
 		{
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 			printf("[%s] %s:%s : ERROR: can't allocate memory for first element. %f: [X(%f),Y(%f)]  \n",
 			__FILE__, caller, __func__,
 			*pfltTm, *pfltX, *pfltY);
 #else
 			printf("[%s] %s:%s : ERROR: can't allocate memory for first element. \n",
 			__FILE__, caller, __func__);
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 			return (-8);
 		}
 
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 		(*ppThisPointChain)->fltXval = *pfltX;
 		(*ppThisPointChain)->fltYval = *pfltY;
 		(*ppThisPointChain)->fltAbsTime = *pfltTm;
@@ -70,13 +70,13 @@ pTimepointType pChild, pTempPointChain;
 		memcpy(& ((*ppThisPointChain)->qfltXval), pqfltX, sizeof(QuasiFloatType) );
 		memcpy(& ((*ppThisPointChain)->qfltYval), pqfltY, sizeof(QuasiFloatType) );
 		memcpy(& ((*ppThisPointChain)->qfltAbsTime), pqfltTm, sizeof(QuasiFloatType) );
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 		(*ppThisPointChain)->pcMarquee = calloc (1, strlen (pcMrq) +1 );
 		strcpy( (*ppThisPointChain)->pcMarquee, pcMrq);
 
 #if DEBUG_DATA
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 		printf("[%s] %s:%s : FIRST <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			(*ppThisPointChain)->fltAbsTime,
 			(*ppThisPointChain)->fltXval,
@@ -97,7 +97,7 @@ pTimepointType pChild, pTempPointChain;
 
 			(*ppThisPointChain)->pcMarquee
 		);
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 #endif /* (DEBUG_DATA) */
 
@@ -111,19 +111,19 @@ pTimepointType pChild, pTempPointChain;
 
 		if (NULL == pTempPointChain)
 		{
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 			printf("[%s] %s:%s : ERROR: can't allocate memory for next element. %f: [X(%f),Y(%f)]  \n", 
 			__FILE__, caller, __func__,
 			*pfltTm, *pfltX, *pfltY);
 #else
 			printf("[%s] %s:%s : ERROR: can't allocate memory for next element.\n", 
 			__FILE__, caller, __func__);
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 			return (-7);
 		}
 
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 		pTempPointChain->fltXval = *pfltX;
 		pTempPointChain->fltYval = *pfltY;
 		pTempPointChain->fltAbsTime = *pfltTm;
@@ -131,13 +131,13 @@ pTimepointType pChild, pTempPointChain;
 		memcpy(& ( pTempPointChain->qfltXval), 	pqfltX, sizeof(QuasiFloatType) );
 		memcpy(& ( pTempPointChain->qfltYval), 	pqfltY, sizeof(QuasiFloatType) );
 		memcpy(& ( pTempPointChain->qfltAbsTime), pqfltTm, sizeof(QuasiFloatType) );
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 		pTempPointChain->pcMarquee = calloc (1, strlen (pcMrq) +1 );
 		strcpy( pTempPointChain->pcMarquee, pcMrq);
 
 #if DEBUG_DATA
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 		printf("[%s] %s:%s : NEXT <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			pTempPointChain->fltAbsTime,
 			pTempPointChain->fltXval,
@@ -158,7 +158,7 @@ pTimepointType pChild, pTempPointChain;
 
 			pTempPointChain->pcMarquee
 		);
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 #endif /* (DEBUG_DATA) */
 
 		/* Skip everything, except last entry */
@@ -178,16 +178,17 @@ pTimepointType pChild, pTempPointChain;
 }
 
 int ProcRealAndRel(
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 	float fltRealTime,
 	float fltXval
 #else
 	QuasiFloatType qfltRealTime,
-	QuasiFloatType qfltXval
-#endif /* !defined(ANTIFLOAT) */
+	QuasiFloatType qfltXval,
+	QuasiFloatType qfltAbsTime
+#endif /* !defined(QUASIFLOAT) */
 	)
 {
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 float fltRelTime;
 float _left, _right;
 float fltJiffy = 1.0;
@@ -196,10 +197,10 @@ QuasiFloatType qfltRelTime;
 int _left, _right;
 QuasiFloatType qfltJiffy; 
 qfltJiffy.fraction = 1;
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 	/* Operate uSeconds multiplied by 10e6 because <usleep> accepts	integer parameters only */
 	fltRealTime = fltRealTime*1000000;
 
@@ -226,7 +227,7 @@ qfltJiffy.fraction = 1;
 
 		printf("[%s] : <TIME SHIFTING> real tm.: %f, shiftable tm.: %f \n", __FILE__, fltRealTime,	fltRelTime ); 
 
-	} while (/*fltRelTime*/ _right < /*fltRealTime*/ _left);
+	} while (_right < _left);
 	
 	/* Now they're equal or least 'relative tm' is not less than 'real tm' */
 	printf("[%s] : <AFTER TIME SHIFTING> will pretend like <%f>, is same as <%f> \n", __FILE__,
@@ -244,16 +245,13 @@ qfltJiffy.fraction = 1;
 			PortD_Down( PD0 );
 		else
 		{
-/*
-Leave excessive current (OVERDOSE_CURR) unprocessed, and leave other 'dubious' cases unprocessed:
+/* Leave excessive current (OVERDOSE_CURR) unprocessed, and leave other 'dubious' cases unprocessed:
 			pPointChain->pcMarquee = calloc (1, strlen (NPROC) +1 );
-			strcpy( pPointChain->pcMarquee, NPROC);
-
-*/
+			strcpy( pPointChain->pcMarquee, NPROC); */
 #if DEBUG_DATA
 				printf("[%s] %s:%s :  <%s> \n", __FILE__, caller, __func__,
 					pPointChain->pcMarquee	);
-#endif (DEBUG_DATA)
+#endif /* (DEBUG_DATA) */
 		}
 
 #else
@@ -283,7 +281,7 @@ Leave excessive current (OVERDOSE_CURR) unprocessed, and leave other 'dubious' c
 
 	if (0 == qfltRealTime.integer) return;
 
-	while (/* qfltRelTime.integer*/ _right < /* qfltRealTime.integer */ _left )
+	while (_right < _left )
 	{
 		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
 		usleep (qfltJiffy.fraction);
@@ -305,7 +303,6 @@ Leave excessive current (OVERDOSE_CURR) unprocessed, and leave other 'dubious' c
 		printf("[%s] : <TIME SHIFTING> real tm.: %d, shiftable tm.: %d \n", __FILE__,
 		qfltRealTime.integer,	qfltRelTime.integer );
 #else
-		printf(",");
 #endif /* defined(FAST_UCSIMM) */
 	}
 
@@ -317,13 +314,10 @@ Leave excessive current (OVERDOSE_CURR) unprocessed, and leave other 'dubious' c
 #else
 #endif /* defined(FAST_UCSIMM) */
 
-
-/*
-Not displayed:
-		if (0 == pPointChain->qfltAbsTime.power)
-		if (iOldSecPRC!= pPointChain->qfltAbsTime.integer)
-		{iOldSecPRC=pPointChain->qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
-*/
+		/* Put marquee 'secPRC: xxx;' on the screen, so we are sure platform has not halted */
+		if (0 == qfltAbsTime.power)
+		if (iOldSecPRC!= qfltAbsTime.integer)
+		{iOldSecPRC=qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
 		
 		/* LOGIC_1_CURR */
 		if (
@@ -347,7 +341,7 @@ Not displayed:
 
 			/* Attention: overvoltage, U = 3.6++ V will be processed as logical zero, too. */
 
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 
 }
 
@@ -365,7 +359,7 @@ double timeusePROC;
 	while (NULL != pPointChain)
 	{
 #if DEBUG_DATA
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 		printf("[%s] %s:%s : <%f> <%f> <%f> <%s> \n", __FILE__, caller, __func__,
 			pPointChain->fltAbsTime,
 			pPointChain->fltXval,
@@ -386,15 +380,15 @@ double timeusePROC;
 
 			pPointChain->pcMarquee
 		);
-#endif /* !defined(ANTIFLOAT) */
+#endif /* !defined(QUASIFLOAT) */
 #endif /* (DEBUG_DATA) */
 
 
-#if !defined(ANTIFLOAT)
+#if !defined(QUASIFLOAT)
 		ProcRealAndRel(pPointChain->fltAbsTime, pPointChain->fltXval);
 #else
-		ProcRealAndRel(pPointChain->qfltAbsTime, pPointChain->qfltXval);
-#endif /* !defined(ANTIFLOAT) */
+		ProcRealAndRel(pPointChain->qfltAbsTime, pPointChain->qfltXval, pPointChain->qfltAbsTime);
+#endif /* !defined(QUASIFLOAT) */
 
 		/* Go to next record of chain */
 		pPointChain = pPointChain->pNext;

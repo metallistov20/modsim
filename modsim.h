@@ -26,6 +26,6 @@
 
 #define FILE_NAME	"./RawData/12d1:1446/NewFile1.csv"
 
-#define LARGE_BUF_SZ	(0x100)
+#define LARGE_BUF_SZ	0x100
 
 #endif /* _MODSIM_H_ */

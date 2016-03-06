@@ -25,15 +25,16 @@
 
 #include "dport.h"
 
-
 void PortD_Prepare()
 {
 #if defined(UCSIMM)
+
 	PDSEL = PD0 | PD1;
 
 	PDDIR = PD0 | PD1;
 
-	printf ("=========\n");
+	printf ("Bits <%08bb> <%08bb> of Port D initialized as OUT\n", (unsigned char)PD0, (unsigned char)PD1);
+
 #endif /* (UCSIMM) */
 }
 

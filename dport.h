@@ -21,7 +21,8 @@
 #define _DPORT_H_
 
 /*
-Function	Module Pin
+BIT		Pin
+~~~~~~~~~~~~~~~~~~
 LD0		30
 LD1		29
 LD2		28
@@ -31,6 +32,7 @@ LD3		27
 #define PD1 0x40
 #define PD2 0x20
 #define PD3 0x10
+
 #define PD0orPD1 (PD0 | PD1)
 
 /*
@@ -44,11 +46,9 @@ LACD		23
 #define LCK 0x02
 #define ACD 0x01
 
-/*
-TTL levels "0" 0,4V and "1" 2,4V
-More precise: less than 0.4 and more than 2.4 correspondingly.
-Data - not more than 3.6 V. Some details: USBN9603-28.pdf
-*/
+/* TTL levels "logical 0" 0.4V and "logical 1" 2.4V, more precise: less than 0.4 and more
+than 2.4 correspondingly. Current on DIn, DOut shuld not exceet 3.6 V. */
+
 #define LOGIC_0_CURR	0.4
 #define LOGIC_1_CURR	2.4
 #define OVERDOSE_CURR 	3.6
