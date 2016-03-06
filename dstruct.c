@@ -194,15 +194,19 @@ int ProcRealAndRel(
 #if !defined(ANTIFLOAT)
 float fltJiffy = 1.0;
 float fltRelTime;
+float _left, _right;
 #else
-float qfltJiffy;
-QuasiFloatType qfltRelTime
+QuasiFloatType qfltJiffy; 
+QuasiFloatType qfltRelTime;
+int _left, _right;
 #endif /* !defined(ANTIFLOAT) */
 
+
+#if !defined(ANTIFLOAT)
 	/* Operate uSeconds multiplied by 10e6 because <usleep> accepts	integer parameters only */
 	fltRealTime = fltRealTime*1000000;
 
-	printf("[%s] : <BEFORE TIME SHIFTING> solid: %f\n", __FILE__, /* caller, */	fltRealTime	);
+	printf("[%s] : <BEFORE TIME SHIFTING> real tm.: %f\n", __FILE__, /* caller, */	fltRealTime	);
 
 	do 
 	{	/* Take current time */
@@ -212,17 +216,94 @@ QuasiFloatType qfltRelTime
 		fltRelTime = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
 			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
 
+		if (fltRelTime < 0)
+			 _right = fltRelTime, _left = fltRealTime;
+		else
+			 _left = fltRelTime, _right = fltRealTime;
+
+
 		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
 		usleep (fltJiffy);
 
-		printf("[%s] : <TIME SHIFTING> solid: %f, shiftable: %f \n", __FILE__, fltRealTime,	fltRelTime ); 
+		printf("[%s] : <TIME SHIFTING> real tm.: %f, shiftable tm.: %f \n", __FILE__, fltRealTime,	fltRelTime ); 
 
-	} while (fltRelTime < fltRealTime);
+	} while (/*fltRelTime*/ _right < /*fltRealTime*/ _left);
 	
-	/* Now they're equal or */
+	/* Now they're equal or least 'relative tm' is not less than 'real tm' */
 	printf("[%s] : <AFTER TIME SHIFTING> will pretend like <%f>, is same as <%f> \n", __FILE__,
 		fltRealTime,
 		fltRelTime );
+#else
+		qfltJiffy.fraction = 1;
+
+		qfltRealTime.integer = 			(qfltRealTime.integer < 0)?
+			(qfltRealTime.integer * 1000000) - (qfltRealTime.fraction / 10):
+			(qfltRealTime.integer * 1000000) + (qfltRealTime.fraction / 10);
+
+// first cycle must be skipable on UCSIMM (start)
+	/* Take current time */
+	gettimeofday(&endtimePROC,0);
+
+	/* Compute how much time elapsed since head of list processing till now */
+	qfltRelTime.integer = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
+		+ endtimePROC.tv_usec - starttimePROC.tv_usec;
+// first cycle must be skipable on UCSIMM (end)
+
+
+#if defined(FAST_UCSIMM)
+	printf("[%s] : <BEFORE TIME SHIFTING> real tm.: %d, shiftable tm.: %d \n", __FILE__,
+		qfltRealTime.integer,	qfltRelTime.integer );
+#else
+#endif /* defined(FAST_UCSIMM) */
+
+
+// first cycle must be skipable on UCSIMM
+// 	do 	
+
+	if (qfltRelTime.integer < 0)
+		 _right = qfltRelTime.integer, _left = qfltRealTime.integer;
+	else
+		 _left = qfltRelTime.integer, _right = qfltRealTime.integer;
+
+	if (0 != qfltRealTime.integer) while (/* qfltRelTime.integer*/ _right < /* qfltRealTime.integer */ _left )
+	{
+		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
+		usleep (qfltJiffy.fraction);
+
+
+		/* Take current time */
+		gettimeofday(&endtimePROC,0);
+
+		/* Compute how much time elapsed since head of list processing till now */
+		qfltRelTime.integer = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
+			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
+
+		if (qfltRelTime.integer < 0)
+			 _right = qfltRelTime.integer, _left = qfltRealTime.integer;
+		else
+			 _left = qfltRelTime.integer, _right = qfltRealTime.integer;
+
+#if defined(FAST_UCSIMM)
+		printf("[%s] : <TIME SHIFTING> real tm.: %d, shiftable tm.: %d \n", __FILE__,
+		qfltRealTime.integer,	qfltRelTime.integer );
+#else
+		printf(",");
+#endif /* defined(FAST_UCSIMM) */
+	}
+// first cycle must be skipable on UCSIMM
+//	} while (qfltRelTime.integer < qfltRealTime.integer);
+
+#if defined(FAST_UCSIMM)
+	/* Now they're equal or least 'relative tm' is not less than 'real tm' */
+	printf("[%s] : <AFTER TIME SHIFTING> will pretend like <%d>, is same as <%d> \n", __FILE__,
+		qfltRealTime.integer,
+		qfltRelTime.integer );
+#else
+#endif /* defined(FAST_UCSIMM) */
+
+
+#endif /* !defined(ANTIFLOAT) */
+
 }
 
 int _ProcessPoints(const char * caller, pTimepointType pPointChainPar)
@@ -280,10 +361,7 @@ Data - not more than 3.6 V. Some details: USBN9603-28.pdf
 			fltAbsTime,
 			timeusePROC ); */
 #else
-		printf("[%s] %s:  <%d.%dE%c0%d> : relative time elapsed: %d microseconds\n", __FILE__, caller, 
-			pPointChain->qfltAbsTime.integer,pPointChain->qfltAbsTime.fraction,
-			pPointChain->qfltAbsTime.sgn,pPointChain->qfltAbsTime.power,
-			timeusePROC );
+		ProcRealAndRel(pPointChain->qfltAbsTime);
 #endif /* !defined(ANTIFLOAT) */
 
 

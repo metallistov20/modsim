@@ -18,7 +18,7 @@
 #
 
 # Prefix to UCLIBS crosscompiler; May be empty in which case it won't be cross-, rather a reguolar compiler
-#PREFIX=m68k-pic-coff-
+# PREFIX=m68k-pic-coff-
 
 # (cross-)compiler
 CC=$(PREFIX)gcc
