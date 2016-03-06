@@ -351,7 +351,7 @@ qfltJiffy.fraction = 1;
 
 		else
 #if !defined(USB20)			
-			/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR */
+			/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR */
 			if (
 				('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
 				 (  (0 == qfltXval.integer)&&(4 >= qfltXval.fraction)   ) 
@@ -360,14 +360,28 @@ qfltJiffy.fraction = 1;
 				/* A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
 				PortD_Down( PD0 );
 
-			/* Attention: overvoltage, U = 3.6++ V will be processed as logical zero, too. */
-
+			/* Attention: overvoltage, U = 3.6++ Volts will be processed as logical zero, too. */
 #else		
-			/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR. -10V ..  -0.01V */
+			/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR. -10 mV .. 10 mV */
 			if (
-				1 /* assuming that rest cases are logical '0' */
-			)
+				/* -1.xxxxx e-02 mV */
+				( (-1 == qfltXval.integer) && ('-' == qfltXval.sgn ) && (2 == qfltXval.power) )
+				||
+				/* -x.xxxxx e-03 mV, -x.xxxxx e-04 mV, .. , -x.xxxxx e-09 mV */
+				( 0 > qfltXval.integer ) && ( ('-' == qfltXval.sgn ) && (3 <= qfltXval.power) )
+				||
+				/* +x.xxxxx e-03 mV, +x.xxxxx e-04 mV, .. , +x.xxxxx e-09 mV */
+				( 0 < qfltXval.integer ) && ( ('+' == qfltXval.sgn ) && (3 <= qfltXval.power) )
+				||
+				/* +1.xxxxx e-02 mV */
+				( (1 == qfltXval.integer) && ('+' == qfltXval.sgn ) && (2 == qfltXval.power) )
+				|| 
+				/* -0.00000 e+00, +0.00000 e+00 */
+				( (0 == qfltXval.integer) && ('+' == qfltXval.sgn ) && (0 == qfltXval.power) && (0 == qfltXval.fraction) )
+			)	
 				PortD_Down( PD0 );
+			else
+				; /* rest voltage levels: unprocessed */
 #endif /* (!defined(USB20)) */
 
 

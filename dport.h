@@ -65,12 +65,12 @@ lines are not terminated. */
 signal voltages of −10 – 10 mV for low and 360–440 mV for logical high level, and termination of 45 Ω to 
 ground, or 90 Ω differential to match the data cable impedance. */
 
-#define LOGIC_0_CURR	(-10.0) /* Lower signal voltages of −10V –10mV for low */
-#define LOGIC_0up_CURR	(-0.01) 
-#define LOGIC_1_CURR	0.36 /* 360–440 mV for logical high level */
+#define LOGIC_0_CURR	(-0.01) /* Lower signal voltages of −10 mV .. +10 mV for low */
+#define LOGIC_0up_CURR	0.01 
+#define LOGIC_1_CURR	0.36 /* 360 mV .. 440 mV for logical high level */
 #define LOGIC_1up_CURR	0.44
-/* Just an assumption, based on abov WIKI info */
-#define OVERDOSE_CURR 	(0.44 + 0.005)
+/* Crrently not used. Undefined. */
+#define OVERDOSE_CURR 	0
 
 #endif /* (#if !defined(USB20)) */
 
