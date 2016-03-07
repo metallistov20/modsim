@@ -1,0 +1,11 @@
+##########################################
+sudo apt-get install nfs-kernel-server
+[+/etc/exports]
+/home/ez    *(rw,sync,no_subtree_check)
+[-/etc/exports]
+sudo service nfs-kernel-server start
+##########################################
+[+UCSIMM+/etc/??]
+/bin/mount -t nfs 10.0.0.17:/home/ez /usr
+[-UCSIMM-/etc/??]
+##########################################

@@ -23,8 +23,11 @@
 #define P_SUCCESS	0
 #define P_ERROR		(-1)
 #define P_ERROR_SCN	(-2)
+#define P_ERROR_MEM	(-3)
+#define P_ERROR_HW	(-4)
 
 #define FILE_NAME	"./RawData/12d1:1446/NewFile1.csv"
+//#define FILE_NAME	"./RawData/1bbb:022c/NewFile1.csv"
 
 #define LARGE_BUF_SZ	0x100
 
