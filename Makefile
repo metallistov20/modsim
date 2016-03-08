@@ -29,8 +29,11 @@ CFLAGS=-O3 -DUCSIMM -DQUASIFLOAT -I/opt/uClinux/m68k-pic-coff/include
 # Excessive debug info not needed when program is ready. Spoils 'realtime' operating mode. Keep commented-out.
 # CFLAGS+=-DDEBUG_DATA
 
-# USB 2.0 signal levels for parsing CVS file data. Comment-out to parse CVS file data according to USB 1.0 signal levels.
+# USB 2.0 signal levels for parsing CVS file data. Comment-out to parse CSV file data according to USB 1.0 signal levels.
 CFLAGS+= -DUSB20
+
+# Checkeing Data IN as feedback; normmally expected to be the same as in raw data X(CH2), see CSV file 
+CFLAGS+= -DDIN_FEEDBACK
 
 # As long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
 LDFLAGS=

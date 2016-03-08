@@ -29,11 +29,25 @@ void PortD_Prepare()
 {
 #if defined(UCSIMM)
 
+#if !defined(DIN_FEEDBACK)
 	PDSEL = PD0 | PD1;
 
 	PDDIR = PD0 | PD1;
 
 	printf ("Bits <%08bb> <%08bb> of Port D initialized as OUT\n", (unsigned char)PD0, (unsigned char)PD1);
+#else
+
+#if 0
+    	SPIMCONT = 0x0277;  // SPIMCONT = PUT_FIELD(SPIMCONT_DATA_RATE, 2) | SPIMCONT_PHA | PUTFIELD(SPIMCONT_BIT_COUNT, 15);
+    	SPIMCONT = PUT_FIELD(SPIMCONT_DATA_RATE, 2) | SPIMCONT_PHA | PUTFIELD(SPIMCONT_BIT_COUNT, 15);
+#else
+    	SPIMCONT = 0x402f;
+    	SPIMCONT |= SPIMCONT_ENABLE;
+
+	printf ("Port D : bit <%08bb> OUT, bit <%08bb> IN \n", (unsigned char)PD0, (unsigned char)PD1);
+#endif /* (0) */ 
+
+#endif /* (!defined(DIN_FEEDBACK)) */
 
 #endif /* (UCSIMM) */
 }
@@ -76,3 +90,26 @@ void PortD_Probe( )
 	}
 #endif /* (UCSIMM) */
 }
+
+#if defined(DIN_FEEDBACK)
+
+int PortD_Read(unsigned char uchBit)
+{
+	while (!(SPIMCONT & SPIMCONT_IRQ));
+		usleep(1);
+
+	return (PDDATA & uchBit) ;
+
+}
+
+int PortD_CheckL0( unsigned char uchBit )
+{
+	return (0 == PortD_Read (uchBit) );
+}
+
+int PortD_CheckL1( unsigned char uchBit )
+{
+	return (1 == PortD_Read (uchBit) );
+}
+
+#endif /* (defined(DIN_FEEDBACK)) */ 
