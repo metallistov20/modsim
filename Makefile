@@ -32,8 +32,8 @@ CFLAGS=-O3 -DUCSIMM -DQUASIFLOAT -I/opt/uClinux/m68k-pic-coff/include
 # USB 2.0 signal levels for parsing CVS file data. Comment-out to parse CSV file data according to USB 1.0 signal levels.
 CFLAGS+= -DUSB20
 
-# Checkeing Data IN as feedback; normmally expected to be the same as in raw data X(CH2), see CSV file 
-CFLAGS+= -DDIN_FEEDBACK
+# Checking Data-IN (backward data stream on D-); expected to be same as X(CH2) in raw data (CSV file) 
+# CFLAGS+= -DDIN_FEEDBACK
 
 # As long as we use toolchaing installed into </opt> we don't pass <-L> and <-rpath-link>
 LDFLAGS=
