@@ -396,14 +396,6 @@ qfltJiffy.fraction = 1;
 
 #if defined(DIN_FEEDBACK)
 
-#if !defined(USB20)
-		/* USB 1.0 levels. Logical '1'.  LOGIC_1_CURR */
-		if (
-			('+' == qfltYval.sgn) && (0 == qfltYval.power) &&
-			 (  (2 == qfltYval.integer)&&(4 <= qfltYval.fraction)   ) ||  (    3 <= qfltYval.integer   )    
-		)
-#else		
-		/* USB 2.0 levels. Logical '1'. LOGIC_1_CURR. 0.36V .. 0.44V */
 		if (
 			/* 3.60000e-01 .. 3.99999 e-01 */ /*last parenthesis: 600000-99999*/
 			(3 == qfltYval.integer) && (  ('-' == qfltYval.sgn ) && (1 <= qfltYval.power) && (600000 <= qfltYval.fraction)  )
@@ -411,36 +403,15 @@ qfltJiffy.fraction = 1;
 			/* 4.00000e-01 .. 4.400000e-01 */ /*last parenthesis: 00000-400000*/
 			(4 == qfltYval.integer) && (  ('-' == qfltYval.sgn ) && (1 <= qfltYval.power) && (400000 >= qfltYval.fraction)  )
 		)
-#endif /* (!defined(USB20)) */
 		{
 			if ( 0 == PortD_CheckL1( PD1 ) )
 			{	
-				/* No signal coinccedence with USB 2.0 */
+				/* No signal coincedence with USB 2.0 */
 				pcMarq = calloc (1, strlen ("[2.0]") +1 );
 				strcpy( pcMarq, "[2.0]");
 			}
-			
 		}
 		else
-#if !defined(USB20)			
-			/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR */
-			if (
-				('+' == qfltYval.sgn) && (0 == qfltYval.power) &&
-				 (  (0 == qfltYval.integer)&&(4 >= qfltYval.fraction)   ) 
-			)
-			else
-			{
-				/* A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
-				if ( 0 == PortD_CheckL0( PD1 ) )
-				{	
-					/* No signal coincedence with USB 1.0 */
-					pcMarq = calloc (1, strlen ("[1.0]") +1 );
-					strcpy( pcMarq, "[1.0]");
-				}
-			}
-
-			/* Attention: overvoltage, U = 3.6++ Volts will be processed as logical zero, too. */
-#else		
 			/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR. -10 mV .. 10 mV */
 			if (
 				/* -1.xxxxx e-02 mV */
@@ -463,14 +434,10 @@ qfltJiffy.fraction = 1;
 				if ( 1 == PortD_CheckL0( PD1 ) )
 				{	
 					/* No signal coincedence with USB 2.0 */
-					pcMarq = calloc (1, strlen ("[1.0]") +1 );
+					pcMarq = calloc (1, strlen ("[2.0]") +1 );
 					strcpy( pcMarq, "[2.0]");
 				}
 			}
-			else
-				; /* rest voltage levels: unprocessed */
-#endif /* (!defined(USB20)) */
-
 
 #endif /* (DIN_FEEDBACK) */
 

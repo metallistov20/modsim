@@ -95,7 +95,8 @@ void PortD_Probe( )
 
 int PortD_Read(unsigned char uchBit)
 {
-	while (!(SPIMCONT & SPIMCONT_IRQ));
+	while (!(SPIMCONT & SPIMCONT_IRQ))
+
 		usleep(1);
 
 	return (PDDATA & uchBit) ;
