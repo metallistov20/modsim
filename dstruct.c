@@ -177,6 +177,68 @@ pTimepointType pChild, pTempPointChain;
 	return (0);
 }
 
+/* Check if raw value is USB 1.0 <logical 0> and return '1' if so, return '0' otherwise */
+int iChkUsb10Lg0(QuasiFloatType qfltVal)
+{
+	/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR */
+	if (
+		('+' == qfltVal.sgn) && (0 == qfltVal.power) &&
+		 (  (0 == qfltVal.integer)&&(4 >= qfltVal.fraction)   ) 
+	) return 1;
+
+	return 0;
+}
+
+/* Check if raw value is USB 1.0 <logical 1> and return '1' if so, return '0' otherwise */
+int iChkUsb10Lg1(QuasiFloatType qfltVal)
+{
+
+	/* USB 1.0 levels. Logical '1'.  LOGIC_1_CURR */
+	if (
+		('+' == qfltVal.sgn) && (0 == qfltVal.power) &&
+		 (  (2 == qfltVal.integer)&&(4 <= qfltVal.fraction)   ) ||  (    3 <= qfltVal.integer   )    
+	) return 1;
+
+	return 0;
+}
+
+/* Check if raw value is USB 2.0 <logical 0> and return '1' if so, return '0' otherwise */
+int iChkUsb20Lg0(QuasiFloatType qfltVal)
+{
+	/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR. -10 mV .. 10 mV */
+	if (
+		/* -1.xxxxx e-02 mV */
+		( (-1 == qfltVal.integer) && ('-' == qfltVal.sgn ) && (2 == qfltVal.power) )
+		||
+		/* -x.xxxxx e-03 mV, -x.xxxxx e-04 mV, .. , -x.xxxxx e-09 mV */
+		( 0 > qfltVal.integer ) && ( ('-' == qfltVal.sgn ) && (3 <= qfltVal.power) )
+		||
+		/* +x.xxxxx e-03 mV, +x.xxxxx e-04 mV, .. , +x.xxxxx e-09 mV */
+		( 0 < qfltVal.integer ) && ( ('+' == qfltVal.sgn ) && (3 <= qfltVal.power) )
+		||
+		/* +1.xxxxx e-02 mV */
+		( (1 == qfltVal.integer) && ('+' == qfltVal.sgn ) && (2 == qfltVal.power) )
+		|| 
+		/* -0.00000 e+00, +0.00000 e+00 */
+		( (0 == qfltVal.integer) && ('+' == qfltVal.sgn ) && (0 == qfltVal.power) && (0 == qfltVal.fraction) )
+	) return;
+}
+
+/* Check if raw value is USB 2.0 <logical 1> and return '1' if so, return '0' otherwise */
+int iChkUsb20Lg1(QuasiFloatType qfltVal)
+{
+	/* USB 2.0 levels. Logical '1'. LOGIC_1_CURR. 0.36V .. 0.44V */
+	if (
+		/* 3.60000e-01 .. 3.99999 e-01 */ /*last parenthesis: 600000-99999*/
+		(3 == qfltVal.integer) && (  ('-' == qfltVal.sgn ) && (1 <= qfltVal.power) && (600000 <= qfltVal.fraction)  )
+		||
+		/* 4.00000e-01 .. 4.400000e-01 */ /*last parenthesis: 00000-400000*/
+		(4 == qfltVal.integer) && (  ('-' == qfltVal.sgn ) && (1 <= qfltVal.power) && (400000 >= qfltVal.fraction)  )
+	) return 1;
+
+	return 0;
+}
+
 int ProcRealAndRel(
 #if !defined(QUASIFLOAT)
 	float fltRealTime,
@@ -336,109 +398,63 @@ qfltJiffy.fraction = 1;
 #else
 #endif /* defined(FAST_UCSIMM) */
 
-		/* Put marquee 'secPRC: xxx;' on the screen, so we are sure platform is still not hanged up */
+		/* Put marquee 'secPRC: xxx;' on the screen, so we are sure platform is still not hanged */
 		if (0 == qfltAbsTime.power)
 			if (iOldSecPRC!= qfltAbsTime.integer)
 				{iOldSecPRC=qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
 
 #if !defined(USB20)
 		/* USB 1.0 levels. Logical '1'.  LOGIC_1_CURR */
-		if (
-			('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
-			 (  (2 == qfltXval.integer)&&(4 <= qfltXval.fraction)   ) ||  (    3 <= qfltXval.integer   )    
-		)
+		if ( iChkUsb10Lg1(qfltXval) )
 #else		
 		/* USB 2.0 levels. Logical '1'. LOGIC_1_CURR. 0.36V .. 0.44V */
-		if (
-			/* 3.60000e-01 .. 3.99999 e-01 */ /*last parenthesis: 600000-99999*/
-			(3 == qfltXval.integer) && (  ('-' == qfltXval.sgn ) && (1 <= qfltXval.power) && (600000 <= qfltXval.fraction)  )
-			||
-			/* 4.00000e-01 .. 4.400000e-01 */ /*last parenthesis: 00000-400000*/
-			(4 == qfltXval.integer) && (  ('-' == qfltXval.sgn ) && (1 <= qfltXval.power) && (400000 >= qfltXval.fraction)  )
-		)
+		if ( iChkUsb20Lg1(qfltXval) )
 #endif /* (!defined(USB20)) */
 			PortD_Up( PD0 );
 
 		else
 #if !defined(USB20)			
 			/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR */
-			if (
-				('+' == qfltXval.sgn) && (0 == qfltXval.power) &&
-				 (  (0 == qfltXval.integer)&&(4 >= qfltXval.fraction)   ) 
-			)
-			else
-				/* A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
+			if ( iChkUsb10Lg0(qfltXval) )
+
 				PortD_Down( PD0 );
+			else
+				/* TODO: REWORK! A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
+				PortD_Down( PD0 );/* TODO: REWORK! */
 
 			/* Attention: overvoltage, U = 3.6++ Volts will be processed as logical zero, too. */
 #else		
 			/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR. -10 mV .. 10 mV */
-			if (
-				/* -1.xxxxx e-02 mV */
-				( (-1 == qfltXval.integer) && ('-' == qfltXval.sgn ) && (2 == qfltXval.power) )
-				||
-				/* -x.xxxxx e-03 mV, -x.xxxxx e-04 mV, .. , -x.xxxxx e-09 mV */
-				( 0 > qfltXval.integer ) && ( ('-' == qfltXval.sgn ) && (3 <= qfltXval.power) )
-				||
-				/* +x.xxxxx e-03 mV, +x.xxxxx e-04 mV, .. , +x.xxxxx e-09 mV */
-				( 0 < qfltXval.integer ) && ( ('+' == qfltXval.sgn ) && (3 <= qfltXval.power) )
-				||
-				/* +1.xxxxx e-02 mV */
-				( (1 == qfltXval.integer) && ('+' == qfltXval.sgn ) && (2 == qfltXval.power) )
-				|| 
-				/* -0.00000 e+00, +0.00000 e+00 */
-				( (0 == qfltXval.integer) && ('+' == qfltXval.sgn ) && (0 == qfltXval.power) && (0 == qfltXval.fraction) )
-			)	
+			if ( iChkUsb20Lg0(qfltXval) )
+	
 				PortD_Down( PD0 );
 			else
 				; /* rest voltage levels: unprocessed */
 #endif /* (!defined(USB20)) */
 
 #if defined(DIN_FEEDBACK)
-
-		if (
-			/* 3.60000e-01 .. 3.99999 e-01 */ /*last parenthesis: 600000-99999*/
-			(3 == qfltYval.integer) && (  ('-' == qfltYval.sgn ) && (1 <= qfltYval.power) && (600000 <= qfltYval.fraction)  )
-			||
-			/* 4.00000e-01 .. 4.400000e-01 */ /*last parenthesis: 00000-400000*/
-			(4 == qfltYval.integer) && (  ('-' == qfltYval.sgn ) && (1 <= qfltYval.power) && (400000 >= qfltYval.fraction)  )
-		)
+#if defined(USB20)
+		if ( iChkUsb20Lg1(qfltYval) )
 		{
 			if ( 0 == PortD_CheckL1( PD1 ) )
 			{	
-				/* No signal coincedence with USB 2.0 */
+				/* No 'logical 1' signal coincedence with USB 2.0 */
 				pcMarq = calloc (1, strlen ("[2.0]") +1 );
 				strcpy( pcMarq, "[2.0]");
 			}
 		}
 		else
-			/* USB 2.0 levels. Logical '0'. LOGIC_0_CURR. -10 mV .. 10 mV */
-			if (
-				/* -1.xxxxx e-02 mV */
-				( (-1 == qfltYval.integer) && ('-' == qfltYval.sgn ) && (2 == qfltYval.power) )
-				||
-				/* -x.xxxxx e-03 mV, -x.xxxxx e-04 mV, .. , -x.xxxxx e-09 mV */
-				( 0 > qfltYval.integer ) && ( ('-' == qfltYval.sgn ) && (3 <= qfltYval.power) )
-				||
-				/* +x.xxxxx e-03 mV, +x.xxxxx e-04 mV, .. , +x.xxxxx e-09 mV */
-				( 0 < qfltYval.integer ) && ( ('+' == qfltYval.sgn ) && (3 <= qfltYval.power) )
-				||
-				/* +1.xxxxx e-02 mV */
-				( (1 == qfltYval.integer) && ('+' == qfltYval.sgn ) && (2 == qfltYval.power) )
-				|| 
-				/* -0.00000 e+00, +0.00000 e+00 */
-				( (0 == qfltYval.integer) && ('+' == qfltYval.sgn ) && (0 == qfltYval.power) && (0 == qfltYval.fraction) )
-			)
+			if ( iChkUsb20Lg0(qfltYval) )
 			{	
-				/* A lot of logical zeroes will come with negative power of 10 (i.e. 'sgn' is '-'). */
 				if ( 1 == PortD_CheckL0( PD1 ) )
 				{	
-					/* No signal coincedence with USB 2.0 */
+					/* No 'logical 0' signal coincedence with USB 2.0 */
 					pcMarq = calloc (1, strlen ("[2.0]") +1 );
 					strcpy( pcMarq, "[2.0]");
 				}
 			}
 
+#endif /* (defined(USB20)) */
 #endif /* (DIN_FEEDBACK) */
 
 #endif /* !defined(QUASIFLOAT) */
