@@ -17,18 +17,28 @@
  MA 02111-1307 USA
 */
 
+/* stdout, NULL, usw */
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <memory.h>
 
+//f.o. #include <stdlib.h>
+
+//f.o. #include <string.h>
+
+//f.o. #include <memory.h>
+
+/* Own interface, definitions */
 #include "modsim.h"
+
+/* Data structures, mocros */
 #include "dstruct.h"
+
+/* Port D definitions and prototypes */
 #include "dport.h"
 
-
+/* Pointer to raw data file */
 FILE *fp = NULL;
 
+/* Bufer to store scanned raw data */
 char cBuf [LARGE_BUF_SZ];
 
 #if !defined(QUASIFLOAT) 
@@ -37,12 +47,15 @@ char cBuf [LARGE_BUF_SZ];
 	QuasiFloatType qfltTM, qfltDIn, qfltDOut;
 #endif /* !defined(QUASIFLOAT) */
 
+/* Pointer to a dynamic structure to store raw data to */
 pTimepointType pTimeChain;
 
+/* Aux. var to tell whether it's a first time we output a message for this 'second'  */
 int iOldSec;
 
 int main ()
 {
+	/* Try to open Raw Data file at place defined by 'FILE_NAME' */
 	if ( NULL == (fp = fopen (FILE_NAME, "r") ) )
 	{
 		printf("[%s] %s: can't open file <%s> \n", __FILE__, __func__ , FILE_NAME);
@@ -52,31 +65,34 @@ int main ()
 
 	printf("[%s] %s: loading USB-curve-data via NFS from file <%s>\n", __FILE__, __func__, FILE_NAME);
 
+	/* For each string of Raw Data file */
 	while ( ! (feof (fp) ) ) 
 	{
+		/* Try to scan a whole string into temp. buffer */
 		if (0 > fscanf (fp, "%s", cBuf ) )
 		{
 			// eof reached
 		}
 		else
 		{
+		/* Aux. buffer to keep results of parsing */
 		char * cpTmp = cBuf;
-
 #if DEBUG_DATA
 			printf("[%s] %s: scanned: < %s >\n", __FILE__, __func__, cBuf);
 #endif /* (DEBUG_DATA) */
 
 #if !defined(QUASIFLOAT) 
+			/* Set default values. MISRA RULE #TODO */
 			fltTM = fltDIn = fltDOut = 0.0f;
 #else
-
+			/* Set default values. MISRA RULE #TODO */
 			memset (&qfltTM, 0, sizeof (QuasiFloatType) ) ;
 			memset (&qfltDIn, 0, sizeof (QuasiFloatType) ) ;
 			memset (&qfltDOut, 0, sizeof (QuasiFloatType) ) ;
 
 #endif /* !defined(QUASIFLOAT) */
 
-			/* In the string obtained */
+			/* For each character in aux. buffer */
 			while (*cpTmp)
 
 				/* replace all commas with spaces, to let the <scanf()> parse it */
@@ -84,13 +100,16 @@ int main ()
 	
 
 #if !defined(QUASIFLOAT) 
+			/* Find 3 floats separated by spaces in aux. buffer */
 			sscanf(cBuf, "%f %f %f,", &fltTM,     &fltDIn,   &fltDOut );
 #else
+			/* Find 3 floats separated by spaces in aux. buffer. Each float represented as <INT>.<INT>e<SIGN>0<INT> */
 			sscanf(cBuf, "%d.%de%c0%d %d.%de%c0%d %d.%de%c0%d,",
 					&(qfltTM.integer),&(qfltTM.fraction),&(qfltTM.sgn),&(qfltTM.power),
 					&(qfltDIn.integer),&(qfltDIn.fraction),&(qfltDIn.sgn),&(qfltDIn.power),
 					&(qfltDOut.integer),&(qfltDOut.fraction),&(qfltDOut.sgn),&(qfltDOut.power)  );
 
+/* For each 'second' value do output. Only once. */ /* TODO: remove? */
 if (0 == qfltTM.power) if (iOldSec!= qfltTM.integer){iOldSec=qfltTM.integer; printf("sec: %d; ", iOldSec); fflush(stdout); }
 
 #endif /* !defined(QUASIFLOAT) */
@@ -108,22 +127,29 @@ if (0 == qfltTM.power) if (iOldSec!= qfltTM.integer){iOldSec=qfltTM.integer; pri
 #endif /* (DEBUG_DATA) */
 
 #if !defined(QUASIFLOAT) 
+			/* Attach just scanned data (three floats) to tail of dynamic structure */
 			EnrollPoint(&pTimeChain, &fltTM, &fltDIn, &fltDOut, "N/A");
 #else
+			/* Attach just scanned data (three floats represented as <INT>.<INT>e<SIGN>0<INT>) to tail of dynamic structure */
 			EnrollPoint(&pTimeChain, &qfltTM, &qfltDIn, &qfltDOut, "N/A");
 #endif /* !defined(QUASIFLOAT) */
 		}
 	}
 
+	/* Dispose pointer to Raw Data file */
 	fclose(fp);
 
 	printf("\n[%s] %s: issuing USB-curve-data on Pin #0 Port 'D'\n", __FILE__, __func__);
 
+	/* Set pins of Port D as inputs/outputs, sets rest platform registers */
 	PortD_Prepare( );
+
+	/* */
 	ProcessPoints(pTimeChain);
 
 	printf("\n[%s] %s: disposing memory allocations\n", __FILE__, __func__);
 
+	/* Free memory occupied by dynamically stored raw data */
 	DeletePoints(&pTimeChain);
 
 	printf("[%s] %s: done (success) \n", __FILE__, __func__); fflush(stdout);

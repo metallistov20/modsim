@@ -20,11 +20,16 @@
 #include <stdio.h>
 
 #if defined(UCSIMM)
+
+/* Platform definitions */
 #include <asm/MC68EZ328.h>
+
 #endif /* (UCSIMM) */
 
+/* Own interface, definitions */
 #include "dport.h"
 
+/* Prepare Port 'D' */
 void PortD_Prepare()
 {
 #if defined(UCSIMM)
@@ -52,6 +57,7 @@ void PortD_Prepare()
 #endif /* (UCSIMM) */
 }
 
+/* Toggle bits defined by bitmask 'uchBit' in Port D*/
 void PortD_Toggle(unsigned char uchBit)
 {
 #if defined(UCSIMM)
@@ -59,6 +65,7 @@ void PortD_Toggle(unsigned char uchBit)
 #endif /* (UCSIMM) */
 }
 
+/* Switch off bits defined by bitmask 'uchBit' in Port D*/
 void PortD_Down(unsigned char uchBit)
 {
 #if defined(UCSIMM)
@@ -66,6 +73,7 @@ void PortD_Down(unsigned char uchBit)
 #endif /* (UCSIMM) */
 }
 
+/* Switch on bits defined by bitmask 'uchBit' in Port D*/
 void PortD_Up(unsigned char uchBit)
 {
 #if defined(UCSIMM)
@@ -93,7 +101,8 @@ void PortD_Probe( )
 
 #if defined(DIN_FEEDBACK)
 
-int PortD_Read(unsigned char uchBit)
+/* Return contents of Port D (as integer) as its data ready */
+unsigned char PortD_Read(unsigned char uchBit)
 {
 	while (!(SPIMCONT & SPIMCONT_IRQ))
 
@@ -103,14 +112,16 @@ int PortD_Read(unsigned char uchBit)
 
 }
 
+/* Check if bit(s) defined by 'uchBit' of Port E is zero */
 int PortD_CheckL0( unsigned char uchBit )
 {
-	return (0 == PortD_Read (uchBit) );
+	return (0 == PortD_Read (~uchBit) );
 }
 
+/* Check if bit(s) defined by 'uchBit' of Port E is one */
 int PortD_CheckL1( unsigned char uchBit )
 {
-	return (1 == PortD_Read (uchBit) );
+	return (0 < PortD_Read (uchBit) );
 }
 
 #endif /* (defined(DIN_FEEDBACK)) */ 
