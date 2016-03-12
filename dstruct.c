@@ -17,13 +17,21 @@
  MA 02111-1307 USA
 */
 
+/* stdout */
 #include <stdio.h>
-#include <string.h>
+
+//f.o. #include <string.h>
+
+/* calloc() */
 #include <stdlib.h>
 
+/* struct timeval, gettimeofday() */
 #include <sys/time.h>
 
+/* Data structure type definition */
 #include "dstruct.h"
+
+/* Port D definitions, prototypes */
 #include "dport.h"
 
 int iOldSecPRC;
@@ -31,6 +39,7 @@ int iOldSecPRC;
 /* Time measurement variables */
 struct timeval starttimePROC, endtimePROC;
 
+/* Attach 3 floats to tail of dynamic structure 'pTimepointType' */
 int _EnrollPoint(const char * caller, pTimepointType * ppThisPointChain, 
 #if !defined(QUASIFLOAT) 
 	float * pfltTm, float * pfltX, float * pfltY, 
@@ -183,7 +192,9 @@ int iChkUsb10Lg0(QuasiFloatType qfltVal)
 	/* USB 1.0 levels. Logical '0'. LOGIC_0_CURR */
 	if (
 		('+' == qfltVal.sgn) && (0 == qfltVal.power) &&
+
 		 (  (0 == qfltVal.integer)&&(4 >= qfltVal.fraction)   ) 
+
 	) return 1;
 
 	return 0;
@@ -239,6 +250,7 @@ int iChkUsb20Lg1(QuasiFloatType qfltVal)
 	return 0;
 }
 
+/* Process Realtime and Relative-time values: certain data to be oputput onto Port D */
 int ProcRealAndRel(
 #if !defined(QUASIFLOAT)
 	float fltRealTime,
@@ -269,13 +281,25 @@ QuasiFloatType qfltJiffy;
 qfltJiffy.fraction = 1;
 #endif /* !defined(QUASIFLOAT) */
 
+/*
+1. On both PC, and MC68EZ328-based HW, going across list allocated in memory runs faster than
+time process defined by raw data. 
+
+2. For this reason we wait a little (do-while-loop below) before issuing current value
+onto Port D. Thus we shift 'current' time a bit ahead.
+
+3. Once, after shifting, we see that 'current' time is not less than time defined by raw data
+value , it's OK to issue current vaolue onto Port D.
+*/
 
 #if !defined(QUASIFLOAT)
+
 	/* Operate uSeconds multiplied by 10e6 because <usleep> accepts	integer parameters only */
 	fltRealTime = fltRealTime*1000000;
 
 	printf("[%s] : <BEFORE TIME SHIFTING> real tm.: %f\n", __FILE__, /* caller, */	fltRealTime	);
 
+	/* Don't proceed with this fuction once given an unappicable input data */
 	if (0.0 == fltRealTime ) return;
 
 	do 
@@ -286,13 +310,20 @@ qfltJiffy.fraction = 1;
 		fltRelTime = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
 			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
 
+		/* If relative time stays on the left from 0 */
 		if (fltRelTime < 0)
-			 _right = fltRelTime, _left = fltRealTime;
+
+			/* then '_right' is relative time, '_left' is real time */
+			_right = fltRelTime, _left = fltRealTime;
+
+		/* If relative time stays on the right from 0, or is exctly 0 */
 		else
-			 _left = fltRelTime, _right = fltRealTime;
+			/* then '_right' is real time, '_left' is relative time */
+			_left = fltRelTime, _right = fltRealTime;
 
 
-		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
+
+		/* Wait for relative time <fltRelTime> to catch up with real time <fltRealTime>  */
 		usleep (fltJiffy);
 
 		printf("[%s] : <TIME SHIFTING> real tm.: %f, shiftable tm.: %f \n", __FILE__, fltRealTime,	fltRelTime ); 
@@ -358,18 +389,24 @@ qfltJiffy.fraction = 1;
 #else
 #endif /* defined(FAST_UCSIMM) */
 
+	/* If relative time stays on the left from 0 */
 	if (qfltRelTime.integer < 0)
-		 _right = qfltRelTime.integer, _left = qfltRealTime.integer;
+
+		/* then '_right' is relative time, '_left' is real time */
+		_right = qfltRelTime.integer, _left = qfltRealTime.integer;
+
+	/* If relative time stays on the right from 0, or is exctly 0 */
 	else
-		 _left = qfltRelTime.integer, _right = qfltRealTime.integer;
+		/* then '_right' is real time, '_left' is relative time */
+		_left = qfltRelTime.integer, _right = qfltRealTime.integer;
 
 	if (0 == qfltRealTime.integer) return;
 
+	/* TODO: make <do-while> instead of <while-do>, thus avoid a code duplication */
 	while (_right < _left )
 	{
 		/* Wait for relative <fltRelTime> to catch up with absolute <fltRealTime>  */
 		usleep (qfltJiffy.fraction);
-
 
 		/* Take current time */
 		gettimeofday(&endtimePROC,0);
@@ -378,10 +415,17 @@ qfltJiffy.fraction = 1;
 		qfltRelTime.integer = 1000000*(endtimePROC.tv_sec - starttimePROC.tv_sec - 6.0) 
 			+ endtimePROC.tv_usec - starttimePROC.tv_usec;
 
+		/* If relative time stays on the left from 0 */
 		if (qfltRelTime.integer < 0)
-			 _right = qfltRelTime.integer, _left = qfltRealTime.integer;
+
+			/* then '_right' is relative time, '_left' is real time */
+			_right = qfltRelTime.integer, _left = qfltRealTime.integer;
+
+		/* If relative time stays on the right from 0, or is exctly 0 */
 		else
-			 _left = qfltRelTime.integer, _right = qfltRealTime.integer;
+
+			/* then '_right' is real time, '_left' is relative time */
+			_left = qfltRelTime.integer, _right = qfltRealTime.integer;
 
 #if defined(FAST_UCSIMM)
 		printf("[%s] : <TIME SHIFTING> real tm.: %d, shiftable tm.: %d \n", __FILE__,
@@ -400,7 +444,9 @@ qfltJiffy.fraction = 1;
 
 		/* Put marquee 'secPRC: xxx;' on the screen, so we are sure platform is still not hanged */
 		if (0 == qfltAbsTime.power)
+
 			if (iOldSecPRC!= qfltAbsTime.integer)
+
 				{iOldSecPRC=qfltAbsTime.integer; printf("secPRC: %d; ", iOldSecPRC); fflush(stdout); }
 
 #if !defined(USB20)
@@ -461,6 +507,7 @@ qfltJiffy.fraction = 1;
 
 }
 
+/* Process data stored in dynamic structure pointed by 'pPointChainPar' */
 int _ProcessPoints(const char * caller, pTimepointType pPointChainPar)
 {
 pTimepointType pPointChain = pPointChainPar;
@@ -468,8 +515,8 @@ float fltAbsTime;
 
 double timeusePROC;
 
-	/* Take first time */
-	gettimeofday(&starttimePROC,0);
+	/* Take initial time. Current time values will be taken in 'ProcRealAndRel()' */
+	gettimeofday(&starttimePROC, 0);
 
 	/* Process each entry of chain */
 	while (NULL != pPointChain)
@@ -519,6 +566,7 @@ double timeusePROC;
 	return 0;
 }
 
+/* Free memory occupied by '*ppThisPointChain' */
 void _DeletePoints(const char * caller, pTimepointType * ppThisPointChain)
 {
 pTimepointType pChild, pThisPointChain = *ppThisPointChain;

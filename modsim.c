@@ -144,7 +144,7 @@ if (0 == qfltTM.power) if (iOldSec!= qfltTM.integer){iOldSec=qfltTM.integer; pri
 	/* Set pins of Port D as inputs/outputs, sets rest platform registers */
 	PortD_Prepare( );
 
-	/* */
+	/* Process data stored in dynamic structure pointed by 'pTimeChain' */
 	ProcessPoints(pTimeChain);
 
 	printf("\n[%s] %s: disposing memory allocations\n", __FILE__, __func__);
